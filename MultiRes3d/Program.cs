@@ -12,6 +12,9 @@ namespace MultiRes3d {
 			Application.EnableVisualStyles();
 			Application.SetCompatibleTextRenderingDefault(false);
 			var form = new Window();
+			// MessagePump verarbeitet alle eingehenden Fensternachrichten und ruft
+			// kontinuierlich form.Run auf, wenn es keine Nachrichten zu verarbeiten
+			// gibt.
 			MessagePump.Run(form, form.Run);
 		}
 	}

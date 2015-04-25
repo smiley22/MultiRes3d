@@ -160,6 +160,7 @@ namespace MultiRes3d {
 		/// Der Winkel, um welchen die Kamera um die Yaw-Achse entgegen dem Uhrzeigersinn
 		/// rotiert werden soll, in Radiant.
 		/// </param>
+		/// <param name="pitch">
 		/// Der Winkel, um welchen die Kamera um die Pitch-Achse entgegen dem Uhrzeigersinn
 		/// rotiert werden soll, in Radiant.
 		/// </param>
@@ -182,7 +183,7 @@ namespace MultiRes3d {
 		/// <summary>
 		/// Rotiert die Kamera um ihre Yaw-Ache, d.h., nach links bzw. rechts.
 		/// </summary>
-		/// <param name="yaw">
+		/// <param name="angle">
 		/// Der Winkel, um welchen die Kamera um die Yaw-Achse entgegen dem Uhrzeigersinn
 		/// rotiert werden soll, in Radiant.
 		/// </param>
@@ -200,7 +201,7 @@ namespace MultiRes3d {
 		/// <summary>
 		/// Rotiert die Kamera um ihre Pitch-Ache, d.h., nach oben bzw. unten.
 		/// </summary>
-		/// <param name="pitch">
+		/// <param name="angle">
 		/// Der Winkel, um welchen die Kamera um die Pitch-Achse entgegen dem Uhrzeigersinn
 		/// rotiert werden soll, in Radiant.
 		/// </param>

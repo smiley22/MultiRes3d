@@ -8,7 +8,6 @@ namespace MultiRes3d {
 	/// <remarks>
 	/// Integriert auch einige nützliche Hilfsmethoden und Konstanten aus der XNA MathHelper
 	/// Klasse.
-	/// </para>
 	/// </remarks>
 	public static class Math {
 		#region Fields
