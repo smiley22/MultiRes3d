@@ -51,10 +51,19 @@ namespace MultiRes3d {
 		}
 
 		/// <summary>
-		/// Liefert eine <c>EffectTechnique</c> um Farbinformationnen auf einer per-Vertex
+		/// Liefert eine <c>EffectTechnique</c> um Farbinformationen auf einer per-Vertex
 		/// Basis zu benutzen.
 		/// </summary>
 		public EffectTechnique ColorTech {
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Liefert eine <c>EffectTechnique</c> um Farbinformationen auf einer per-Vertex
+		/// Basis zu benutzen mit Lichtberechnung.
+		/// </summary>
+		public EffectTechnique ColorLitTech {
 			get;
 			private set;
 		}
@@ -290,6 +299,9 @@ namespace MultiRes3d {
 			ColorTech = effect.GetTechniqueByName("ColorTech");
 			if (!ColorTech.IsValid)
 				notFound.Add("ColorTech");
+			ColorLitTech = effect.GetTechniqueByName("ColorLitTech");
+			if (!ColorLitTech.IsValid)
+				notFound.Add("ColorLitTech");
 			if (notFound.Count > 0) {
 				throw new Direct3D11Exception("The following effect techniques could not be found: "
 					+ string.Join(", ", notFound));

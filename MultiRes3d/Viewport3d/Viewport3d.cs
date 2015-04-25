@@ -40,6 +40,16 @@ namespace MultiRes3d {
 		}
 
 		/// <summary>
+		/// Der Effect zum Setzen der Shader Variablen.
+		/// </summary>
+		[Browsable(false)]
+		public BasicEffect Effect {
+			get {
+				return renderer != null ? renderer.Effect : null;
+			}
+		}
+
+		/// <summary>
 		/// Eine Punktlichtquelle innerhalb der 3D Szene.
 		/// </summary>
 		public PointLight PointLight {

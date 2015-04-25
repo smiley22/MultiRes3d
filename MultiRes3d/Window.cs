@@ -1,4 +1,6 @@
-﻿using System;
+﻿using SlimDX;
+using SlimDX.Direct3D11;
+using System;
 using System.Drawing;
 using System.Windows.Forms;
 
@@ -36,7 +38,6 @@ namespace MultiRes3d {
 		/// Die Zeitspanne, die seit dem letzten Aufruf vergangen ist.
 		/// </param>
 		void Update(double deltaTime) {
-			viewport3d.DrawString("Hello World", new SlimDX.Vector2(320, 100), Color.Green);
 		}
 
 		/// <summary>
@@ -83,6 +84,54 @@ namespace MultiRes3d {
 		void OnClickMenuExit(object sender, EventArgs e) {
 			// Form schließen und damit Anwendung beenden.
 			Close();
+		}
+
+		Mesh testMesh;
+		PM pm;
+
+		/// <summary>
+		/// Event Methode, die aufgerufen wird, wenn das Fenster fertig initialisiert
+		/// wurde.
+		/// </summary>
+		/// <param name="sender">
+		/// Der Sender des Events.
+		/// </param>
+		/// <param name="e">
+		/// Die Event Parameter.
+		/// </param>
+		void OnLoad(object sender, EventArgs e) {
+			testMesh = ObjIO.Load("Testdata/bunny.obj");
+
+			// 1. PM aus testMesh erstellen.
+			pm = new PM(viewport3d, testMesh);
+			pm.Scale = 0.15f;
+
+			// 2. PM viewport.Entities hinzufügen.
+			viewport3d.Entities.Add(pm);
+
+			viewport3d.PointLight.Ambient = new Color4(0.34f, 0.34f, 0.34f);
+
+			viewport3d.PointLight.Diffuse = new Color4(0.7f, 0.5f, 0.3f);
+			viewport3d.PointLight.Position = new Vector3(0.8f, 1f, -0.5f);
+			viewport3d.PointLight.Attenuation = new Vector3(0.0f, 0.5f, 0.0f);
+			viewport3d.PointLight.Range = 3.03f;
+		}
+
+		/// <summary>
+		/// Event Methode, die aufgerufn wird, wenn das Fenster geschlossen wurde.
+		/// </summary>
+		/// <param name="sender">
+		/// Der Sender des Events.
+		/// </param>
+		/// <param name="e">
+		/// Die Event Parameter.
+		/// </param>
+		void OnClosed(object sender, FormClosedEventArgs e) {
+			if (pm != null) {
+				viewport3d.Entities.Remove(pm);
+				pm.Dispose();
+			}
+
 		}
 	}
 }

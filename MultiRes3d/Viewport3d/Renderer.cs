@@ -116,6 +116,15 @@ namespace MultiRes3d {
 		}
 
 		/// <summary>
+		/// Der Effect zum Setzen der Shader Variablen.
+		/// </summary>
+		public BasicEffect Effect {
+			get {
+				return effect;
+			}
+		}
+
+		/// <summary>
 		/// Initialisiert eine neue Instanz der Renderer Klasse.
 		/// </summary>
 		/// <param name="control">
@@ -197,6 +206,9 @@ namespace MultiRes3d {
 				model = ent.Transform;
 				Matrix.Multiply(ref model, ref viewMatrix, out modelView);
 				Matrix.Multiply(ref modelView, ref projectionMatrix, out modelViewProjection);
+
+				effect.SetWorld(model);
+				effect.SetWorldViewProjection(modelViewProjection);
 				// TODO: Hier Render Methode alle registrierten Entity Instanzen aufrufen.
 				ent.Render(context, effect);
 			}

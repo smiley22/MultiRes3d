@@ -166,23 +166,55 @@ if(useSpecMap) {
 
 struct ColorVertexIn {
 	float3 PosL		: Position;
+	float3 NormalL	: Normal;
 };
 
 struct ColorVertexOut {
 	float4 PosH		: SV_POSITION;
+	float3 PosW		: Position;
+	float3 NormalW	: Normal;
 };
 
 
 ColorVertexOut ColorVS(ColorVertexIn vin) {
 	ColorVertexOut vout;
-	// In Homogenen Clip Space transformieren.
+	// Vertex Positon in Weltkoordinatensytem transformieren.
+	vout.PosW		= mul(float4(vin.PosL, 1.0f), gWorld).xyz;
+	// Vertex Position in Homogenen Clip Space transformieren.
 	vout.PosH		= mul(float4(vin.PosL, 1.0f), gWorldViewProj);
+	vout.NormalW	= mul(vin.NormalL, (float3x3)gWorld);
+
 	return vout;
 }
 
-float4 ColorPS(ColorVertexOut pin) : SV_Target {
-//	return pin.Color;
-	return gColor;
+float4 ColorPS(ColorVertexOut pin, uniform bool useLighting) : SV_Target {
+	float4 litColor = gColor;
+if (useLighting) {
+	// Interpolierte Normale muss ggf. erneut normalisiert werden. (Warum nochmal?)
+	pin.NormalW       = normalize(pin.NormalW);
+
+	float4 ambient    = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	float4 diffuse    = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	float4 spec       = float4(0.0f, 0.0f, 0.0f, 0.0f);
+	float4 specSample = float4(0.0f, 0.0f, 0.0f, 0.0f);
+
+	float3 toEyeW = normalize(gEyePosW - pin.PosW);
+	// Die Beiträge jeder Lichtquelle aufsummieren.
+	float4 A, D, S;
+	ComputeDirectionalLight(specSample, gDirLight, pin.NormalW, toEyeW, A, D, S);
+	ambient += A;  
+	diffuse += D;
+	spec    += S;
+
+	// Unser Point Light berücksichtigen.
+	ComputePointLight(specSample, gPointLight, pin.PosW, pin.NormalW, toEyeW, A, D, S);
+	ambient += A;
+	diffuse += D;
+	spec    += S;
+
+	litColor = litColor*(ambient + diffuse) + spec;
+}
+	return litColor;
 }
 
 // *************************                                      *************************
@@ -223,12 +255,23 @@ technique11 TexSpecLitTech {
 }
 
 //
-// Farbwerte des Vertex benutzen.
+// Farbwerte des Vertex benutzen. Kein Licht.
 //
 technique11 ColorTech {
 	pass P0 {
 		SetVertexShader(CompileShader(vs_4_0, ColorVS()));
 		SetGeometryShader(NULL);
-		SetPixelShader(CompileShader(ps_4_0, ColorPS()));
+		SetPixelShader(CompileShader(ps_4_0, ColorPS(false)));
+	}
+}
+
+//
+// Farbwerte des Vertex benutzen. Licht berechnn.
+//
+technique11 ColorLitTech {
+	pass P0 {
+		SetVertexShader(CompileShader(vs_4_0, ColorVS()));
+		SetGeometryShader(NULL);
+		SetPixelShader(CompileShader(ps_4_0, ColorPS(true)));
 	}
 }

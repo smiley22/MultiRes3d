@@ -96,6 +96,8 @@
 			this.MainMenuStrip = this.menuStrip;
 			this.Name = "Window";
 			this.Text = "Window";
+			this.FormClosed += new System.Windows.Forms.FormClosedEventHandler(this.OnClosed);
+			this.Load += new System.EventHandler(this.OnLoad);
 			this.menuStrip.ResumeLayout(false);
 			this.menuStrip.PerformLayout();
 			this.ResumeLayout(false);

@@ -54,11 +54,15 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Datastructures\Mesh.cs" />
     <Compile Include="Datastructures\PM.cs" />
+    <Compile Include="Datastructures\Triangle.cs" />
     <Compile Include="Datastructures\Vertex.cs" />
+    <Compile Include="Datastructures\VertexSplit.cs" />
     <Compile Include="Effects\BasicEffect.cs" />
     <Compile Include="Effects\IncludeFx.cs" />
     <Compile Include="FrameCounter.cs" />
+    <Compile Include="ObjIO.cs" />
     <Compile Include="Window.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -102,6 +106,9 @@
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
     </Compile>
+    <None Include="Testdata\bunny.obj">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </None>
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
