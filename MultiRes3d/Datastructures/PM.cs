@@ -1,15 +1,11 @@
-﻿using SlimDX.Direct3D11;
+﻿using SlimDX;
+using SlimDX.Direct3D11;
 using SlimDX.DXGI;
 using System;
-using System.Runtime.InteropServices;
-using System.Windows.Forms;
-using Buffer = SlimDX.Direct3D11.Buffer;
-using Math = MultiRes3d.Math;
-using Device = SlimDX.Direct3D11.Device;
-using System.Drawing;
 using System.Collections.Generic;
-using SlimDX;
+using System.Drawing;
 using System.Linq;
+using Buffer = SlimDX.Direct3D11.Buffer;
 
 namespace MultiRes3d {
 	/// <summary>

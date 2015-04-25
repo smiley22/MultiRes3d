@@ -29,6 +29,13 @@
 			this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
 			this.MenuExit = new System.Windows.Forms.ToolStripMenuItem();
 			this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
+			this.MenuSettings = new System.Windows.Forms.ToolStripMenuItem();
+			this.MenuWireframe = new System.Windows.Forms.ToolStripMenuItem();
+			this.lightColourToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+			this.MenuColourNeutral = new System.Windows.Forms.ToolStripMenuItem();
+			this.MenuColourRed = new System.Windows.Forms.ToolStripMenuItem();
+			this.MenuColourGreen = new System.Windows.Forms.ToolStripMenuItem();
+			this.MenuColourBlue = new System.Windows.Forms.ToolStripMenuItem();
 			this.viewport3d = new MultiRes3d.Viewport3d();
 			this.menuStrip.SuspendLayout();
 			this.SuspendLayout();
@@ -36,7 +43,8 @@
 			// menuStrip
 			// 
 			this.menuStrip.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.fileToolStripMenuItem});
+            this.fileToolStripMenuItem,
+            this.MenuSettings});
 			this.menuStrip.Location = new System.Drawing.Point(0, 0);
 			this.menuStrip.Name = "menuStrip";
 			this.menuStrip.Size = new System.Drawing.Size(633, 24);
@@ -75,6 +83,64 @@
 			// openFileDialog
 			// 
 			this.openFileDialog.Filter = "Obj files|*.obj|All files|*.*";
+			// 
+			// MenuSettings
+			// 
+			this.MenuSettings.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.MenuWireframe,
+            this.lightColourToolStripMenuItem});
+			this.MenuSettings.Name = "MenuSettings";
+			this.MenuSettings.Size = new System.Drawing.Size(61, 20);
+			this.MenuSettings.Text = "Settings";
+			// 
+			// MenuWireframe
+			// 
+			this.MenuWireframe.CheckOnClick = true;
+			this.MenuWireframe.Name = "MenuWireframe";
+			this.MenuWireframe.Size = new System.Drawing.Size(152, 22);
+			this.MenuWireframe.Text = "Wireframe";
+			this.MenuWireframe.Click += new System.EventHandler(this.OnClickMenuWireframe);
+			// 
+			// lightColourToolStripMenuItem
+			// 
+			this.lightColourToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.MenuColourNeutral,
+            this.MenuColourRed,
+            this.MenuColourGreen,
+            this.MenuColourBlue});
+			this.lightColourToolStripMenuItem.Name = "lightColourToolStripMenuItem";
+			this.lightColourToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+			this.lightColourToolStripMenuItem.Text = "Light Colour";
+			// 
+			// MenuColourNeutral
+			// 
+			this.MenuColourNeutral.Checked = true;
+			this.MenuColourNeutral.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.MenuColourNeutral.Name = "MenuColourNeutral";
+			this.MenuColourNeutral.Size = new System.Drawing.Size(152, 22);
+			this.MenuColourNeutral.Text = "Neutral";
+			this.MenuColourNeutral.Click += new System.EventHandler(this.OnClickMenuColour);
+			// 
+			// MenuColourRed
+			// 
+			this.MenuColourRed.Name = "MenuColourRed";
+			this.MenuColourRed.Size = new System.Drawing.Size(152, 22);
+			this.MenuColourRed.Text = "Red";
+			this.MenuColourRed.Click += new System.EventHandler(this.OnClickMenuColour);
+			// 
+			// MenuColourGreen
+			// 
+			this.MenuColourGreen.Name = "MenuColourGreen";
+			this.MenuColourGreen.Size = new System.Drawing.Size(152, 22);
+			this.MenuColourGreen.Text = "Green";
+			this.MenuColourGreen.Click += new System.EventHandler(this.OnClickMenuColour);
+			// 
+			// MenuColourBlue
+			// 
+			this.MenuColourBlue.Name = "MenuColourBlue";
+			this.MenuColourBlue.Size = new System.Drawing.Size(152, 22);
+			this.MenuColourBlue.Text = "Blue";
+			this.MenuColourBlue.Click += new System.EventHandler(this.OnClickMenuColour);
 			// 
 			// viewport3d
 			// 
@@ -115,6 +181,13 @@
 		private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
 		private System.Windows.Forms.ToolStripMenuItem MenuExit;
 		private System.Windows.Forms.OpenFileDialog openFileDialog;
+		private System.Windows.Forms.ToolStripMenuItem MenuSettings;
+		private System.Windows.Forms.ToolStripMenuItem MenuWireframe;
+		private System.Windows.Forms.ToolStripMenuItem lightColourToolStripMenuItem;
+		private System.Windows.Forms.ToolStripMenuItem MenuColourNeutral;
+		private System.Windows.Forms.ToolStripMenuItem MenuColourRed;
+		private System.Windows.Forms.ToolStripMenuItem MenuColourGreen;
+		private System.Windows.Forms.ToolStripMenuItem MenuColourBlue;
 	}
 }
 

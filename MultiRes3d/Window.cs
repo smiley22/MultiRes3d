@@ -1,6 +1,8 @@
 ﻿using SlimDX;
 using SlimDX.Direct3D11;
 using System;
+using System.Collections.Generic;
+using System.Drawing;
 using System.Windows.Forms;
 
 namespace MultiRes3d {
@@ -74,8 +76,6 @@ namespace MultiRes3d {
 			try {
 				var mesh = ObjIO.Load(openFileDialog.FileName);
 				var test = new PM(viewport3d, mesh);
-				test.Scale = 0.15f;
-				test.Position = new Vector3(test.Position.X, test.Position.Y - .5f, test.Position.Z);
 
 				SetRenderObject(test);
 			} catch (Exception ex) {
@@ -98,6 +98,8 @@ namespace MultiRes3d {
 			}
 			pm = mesh;
 			viewport3d.Entities.Add(pm);
+			// Kamera, Skalierung, Licht usw. zurücksetzen.
+			Reset();
 		}
 
 		/// <summary>
@@ -114,7 +116,6 @@ namespace MultiRes3d {
 			// Form schließen und damit Anwendung beenden.
 			Close();
 		}
-
 
 		/// <summary>
 		/// Event Methode, die aufgerufen wird, wenn das Fenster fertig initialisiert
@@ -138,7 +139,7 @@ namespace MultiRes3d {
 			SetRenderObject(test);
 			
 			viewport3d.PointLight.Ambient = new Color4(0.34f, 0.34f, 0.34f);
-			viewport3d.PointLight.Diffuse = new Color4(0.8f, 0.5f, 0.5f);
+			viewport3d.PointLight.Diffuse = Color.Gray;
 			viewport3d.PointLight.Attenuation = new Vector3(0.5f, 0.1f, 0.0f);
 			viewport3d.PointLight.Range = 7.03f;
 		}
@@ -176,10 +177,10 @@ namespace MultiRes3d {
 				return;
 			switch (e.KeyCode) {
 				case Keys.D1:
-					viewport3d.FillMode = FillMode.Solid;
+					SetWireframe(false);
 					break;
 				case Keys.D2:
-					viewport3d.FillMode = FillMode.Wireframe;
+					SetWireframe(true);
 					break;
 				case Keys.Up:
 					pm.Y += moveStep;
@@ -194,10 +195,71 @@ namespace MultiRes3d {
 					pm.Scale -= scaleStep;
 					break;
 				case Keys.R:
-					pm.Scale = 1.0f;
-					pm.Position = Vector3.Zero;
+					Reset();
 					break;
 			}
+		}
+
+		/// <summary>
+		/// Event Methode, die aufgerufen wird, wenn der Menüpunkt "Settings -> Wireframe"
+		/// betätigt wird.
+		/// </summary>
+		/// <param name="sender">
+		/// Der Sender des Events.
+		/// </param>
+		/// <param name="e">
+		/// Die Event Parameter.
+		/// </param>
+		void OnClickMenuWireframe(object sender, EventArgs e) {
+			SetWireframe(MenuWireframe.Checked);
+		}
+
+		/// <summary>
+		/// Event Methode, die aufgerufen wird, wenn einer der Unterpunkte des Menüpunkts
+		/// "Settings -> Colours" betätigt wird.
+		/// </summary>
+		/// <param name="sender">
+		/// Der Sender des Events.
+		/// </param>
+		/// <param name="e">
+		/// Die Event Parameter.
+		/// </param>
+		void OnClickMenuColour(object sender, EventArgs e) {
+			var dict = new Dictionary<ToolStripMenuItem, Color4>() {
+				{ MenuColourNeutral,	Color.Gray },
+				{ MenuColourRed,		Color.Red },
+				{ MenuColourGreen,		Color.Green },
+				{ MenuColourBlue,		Color.CornflowerBlue }
+			};
+			viewport3d.PointLight.Diffuse = dict[sender as ToolStripMenuItem];
+			foreach (var k in dict.Keys) {
+				k.Checked = k == sender;
+			}
+		}
+
+		/// <summary>
+		/// Schaltet Wireframe Darstellung an oder aus.
+		/// </summary>
+		/// <param name="enable">
+		/// true, um das Objekt in Wireframe Darstellung zu rendern; andernfalls false.
+		/// </param>
+		void SetWireframe(bool enable) {
+			viewport3d.FillMode = enable ? FillMode.Wireframe : FillMode.Solid;
+			MenuWireframe.Checked = enable;
+		}
+
+		/// <summary>
+		/// Setzt alle Einstellungen auf ihre Standardwerte zurück.
+		/// </summary>
+		void Reset() {
+			pm.Scale = 1.0f;
+			pm.Position = Vector3.Zero;
+			SetWireframe(false);
+			// Hack: Einfach einen Klick simulieren, damit die Menüpunkte richtig
+			//       abgehakt werden.
+			OnClickMenuColour(MenuColourNeutral, EventArgs.Empty);
+			// Kamera muss nicht zurückgesetzt werden, da dies bereits vom Viewport3d
+			// Control erledigt wird (siehe InputProcessor).
 		}
 	}
 }
