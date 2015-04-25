@@ -45,6 +45,7 @@ namespace MultiRes3d {
 		void Update(double deltaTime) {
 			if (showHelp)
 				DrawHelpText();
+			DrawInfoText();
 
 			viewport3d.PointLight.Position = viewport3d.Camera.Eye;
 
@@ -118,7 +119,9 @@ namespace MultiRes3d {
 				{ "S", "Decrease Object Scale" },
 				{ "↑", "Move Up Object" },
 				{ "↓", "Move Down Object" },
-				{ "R", "Reset Settings" }
+				{ "R", "Reset Settings" },
+				{ "+", "Expand Mesh" },
+				{ "-", "Simplify Mesh" }
 			};
 			int xKey = 10,
 				xText = 40,
@@ -130,6 +133,20 @@ namespace MultiRes3d {
 				y += lineHeight;
 			}
 			viewport3d.DrawString(version, new Vector2(10, 10), Color.White);
+		}
+
+		/// <summary>
+		/// Rendert einige Informationen über die Mesh wie Vertex- u. Facettenanzahl.
+		/// </summary>
+		void DrawInfoText() {
+			viewport3d.DrawString("Number of Vertices", new Vector2(10, 257), Color.White);
+			viewport3d.DrawString("1804", new Vector2(160, 257), Color.Turquoise);
+
+			viewport3d.DrawString("Number of Faces", new Vector2(10, 275), Color.White);
+			viewport3d.DrawString("4252", new Vector2(160, 275), Color.Turquoise);
+
+			viewport3d.DrawString("Level of Progression", new Vector2(10, 305), Color.White);
+			viewport3d.DrawString("127/1029 (14 %)", new Vector2(160, 305), Color.LawnGreen);
 		}
 
 		/// <summary>

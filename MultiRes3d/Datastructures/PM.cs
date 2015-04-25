@@ -27,17 +27,19 @@ namespace MultiRes3d {
 		/// <param name="m">
 		/// Eine Mesh Instanz mit deren Daten die Progressiv Mesh initialisiert werden soll.
 		/// </param>
-		public PM(Viewport3d viewport3d, Mesh m)
-			: base() {
-				this.viewport3d = viewport3d;
-				vertexBuffer = CreateVertexBuffer(m.Vertices.Count, m.Vertices);
-				indexBuffer = CreateIndexBuffer(m.Faces.Count * 3, m.Faces);
-				inputLayout = CreateInputLayout();
-				vertexBufferBinding = new VertexBufferBinding(vertexBuffer, Vertex.Size, 0);
+		public PM(Viewport3d viewport3d, Mesh m) : base() {
+			this.viewport3d = viewport3d;
+			// Platz im Vertexbuffer: Anzahl der Vertices der Grundmesh +
+			//						  Anzahl der SplitRecords.
+			vertexBuffer = CreateVertexBuffer(m.Vertices.Count, m.Vertices);
+			// Indexbuffer analog dazu.
+			indexBuffer = CreateIndexBuffer(m.Faces.Count * 3, m.Faces);
+			inputLayout = CreateInputLayout();
+			vertexBufferBinding = new VertexBufferBinding(vertexBuffer, Vertex.Size, 0);
 
-				numIndices = m.Faces.Count * 3;
-
+			numIndices = m.Faces.Count * 3;
 		}
+
 		int numIndices;
 		/// <summary>
 		/// Rendert die Instanz.
@@ -50,10 +52,9 @@ namespace MultiRes3d {
 		/// </param>
 		public override void Render(DeviceContext context, BasicEffect effect) {
 			// D3D11 Input-Assembler konfigurieren.
-
 			ApplyRenderState(context, effect);
 
-			// Nun können wir die Daten in unseren Buffern rendern.
+			// Inhalt des Vertexbuffers rendern.
 			var tech = effect.ColorLitTech;
 			for (int i = 0; i < tech.Description.PassCount; i++) {
 				tech.GetPassByIndex(i).Apply(context);
@@ -93,27 +94,61 @@ namespace MultiRes3d {
 			}
 		}
 
+		/// <summary>
+		/// Konfiguriert den InputAssembler des D3D11 Contexts, d.h. "verdrahtet"
+		/// die Vertex- u. Indexbuffer der PM so daß sie als Eingabe für die
+		/// Shader dienen.
+		/// </summary>
+		/// <param name="context">
+		/// Der D3D11 Context.
+		/// </param>
+		/// <param name="effect">
+		/// Die Effekt Instanz zum Setzen der benötigten Shader Variablen.
+		/// </param>
 		void ApplyRenderState(DeviceContext context, BasicEffect effect) {
 			context.InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleList;
 			context.InputAssembler.InputLayout = inputLayout;
 			context.InputAssembler.SetVertexBuffers(0, vertexBufferBinding);
 				context.InputAssembler.SetIndexBuffer(indexBuffer, Format.R32_UInt, 0);
+			// Grundfarbe, die als Eingabewert bei der Lichtberechnung benutzt wird.
 			effect.SetColor(Color.Gray);
 		}
 
 
 		#region D3D11 Initialisierungen
+		/// <summary>
+		/// Erstellt den Vertexbuffer für die Vertex-Daten der Mesh.
+		/// </summary>
+		/// <param name="maxVertices">
+		/// Die max. Anzahl an Vertices, die im Buffer gespeichert können werden sollen.
+		/// </param>
+		/// <param name="vertices"></param>
+		/// <returns>
+		/// Eine initialisierte Instanz der Buffer-Klasse, die den VertexBuffer
+		/// repräsentiert.
+		/// </returns>
 		Buffer CreateVertexBuffer(int maxVertices, IList<Vertex> vertices) {
 			var desc = new BufferDescription(Vertex.Size * maxVertices,
-				/*ResourceUsage.Dynamic*/ ResourceUsage.Immutable, BindFlags.VertexBuffer, /*CpuAccessFlags.Write*/ CpuAccessFlags.None,
+				ResourceUsage.Dynamic, BindFlags.VertexBuffer, CpuAccessFlags.Write,
 				ResourceOptionFlags.None, 0);
-//			return new Buffer(viewport3d.Device, desc);
-			return new Buffer(viewport3d.Device, new DataStream(vertices.ToArray(), true, false), desc);
+			return new Buffer(viewport3d.Device,
+				new DataStream(vertices.ToArray(), true, false), desc);
 		}
 
+		/// <summary>
+		/// Erstellt den Indexbuffer für die Indices der Facetten der Mesh.
+		/// </summary>
+		/// <param name="maxIndices">
+		/// Die max. Anzahl an Indices, die im Buffer gespeichert können werden sollen.
+		/// </param>
+		/// <param name="faces"></param>
+		/// <returns>
+		/// Eine initialisierte Instanz der Buffer-Klasse, die den IndexBuffer
+		/// repräsentiert.
+		/// </returns>
 		Buffer CreateIndexBuffer(int maxIndices, IList<Triangle> faces) {
 			var desc = new BufferDescription(sizeof(uint) * maxIndices,
-				/*ResourceUsage.Dynamic*/ ResourceUsage.Immutable, BindFlags.IndexBuffer, /*CpuAccessFlags.Write*/ CpuAccessFlags.None,
+				ResourceUsage.Dynamic, BindFlags.IndexBuffer, CpuAccessFlags.Write,
 				ResourceOptionFlags.None, 0);
 //			return new Buffer(viewport3d.Device, desc);
 			var indices = new uint[maxIndices];
@@ -125,23 +160,27 @@ namespace MultiRes3d {
 			return new Buffer(viewport3d.Device, new DataStream(indices, false, false), desc);
 		}
 
+		/// <summary>
+		/// Erstellt das Input-Layout für den Input-Assembler.
+		/// </summary>
+		/// <returns>
+		/// Das Input-Layout.
+		/// </returns>
 		InputLayout CreateInputLayout() {
-			// Unser Input-Layout ist sehr einfach: Pro Vertex gibt es nur einen Ortsvektor
-			// und sonst nix.
+			// Pro-Vertex Daten im Vertexbuffer.
 			var elements = new[] {
 				new InputElement("Position", 0, Format.R32G32B32_Float, 0, 0, 
 					InputClassification.PerVertexData, 0),
-				new InputElement("Normal", 0, Format.R32G32B32_Float, 4*3, 0,
+				new InputElement("Normal", 0, Format.R32G32B32_Float, 4 * 3, 0,
 					InputClassification.PerVertexData, 0)
 			};
 			// Input-Layout wird gegen die Signatur der Shader-Technique geprüft, um
-			// sicherzustellen, daß unsere Datenstruktur für den Vertex Shader und
-			// die im Shader/Effect definierte übereinstimmen.
+			// sicherzustellen, daß unsere Datenstruktur und die struct im Shader/Effect
+			// übereinstimmen.
 			var sig = viewport3d.Effect.ColorLitTech.GetPassByIndex(0).Description.Signature;
 
 			return new InputLayout(viewport3d.Device, sig, elements);
 		}
 		#endregion
-
 	}
 }
