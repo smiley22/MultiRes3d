@@ -38,7 +38,7 @@ namespace MultiRes3d {
 		}
 
 		/// <summary>
-		/// Liefer oder Setzt die Position des Objekts.
+		/// Liefert oder Setzt die Position des Objekts.
 		/// </summary>
 		public Vector3 Position {
 			get {
@@ -47,6 +47,42 @@ namespace MultiRes3d {
 			set {
 				position = value;
 				UpdateTransformationMatrix();
+			}
+		}
+
+		/// <summary>
+		/// Liefert oder Setzt die X Komponente der Position des Objekts.
+		/// </summary>
+		public float X {
+			get {
+				return position.X;
+			}
+			set {
+				Position = new Vector3(value, position.Y, position.Z);
+			}
+		}
+
+		/// <summary>
+		/// Liefert oder Setzt die Y Komponente der Position des Objekts.
+		/// </summary>
+		public float Y {
+			get {
+				return position.Y;
+			}
+			set {
+				Position = new Vector3(position.X, value, position.Z);
+			}
+		}
+
+		/// <summary>
+		/// Liefert oder Setzt die Z Komponente der Position des Objekts.
+		/// </summary>
+		public float Z {
+			get {
+				return position.Z;
+			}
+			set {
+				Position = new Vector3(position.X, position.Y, value);
 			}
 		}
 

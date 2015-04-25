@@ -10,6 +10,9 @@ namespace MultiRes3d {
 		/// </summary>
 		public readonly int[] Indices = new int[3];
 
+		/// <summary>
+		/// Der Normalenvektor der Facette.
+		/// </summary>
 		public Vector3 Normal;
 
 		/// <summary>

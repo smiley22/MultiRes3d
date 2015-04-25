@@ -28,12 +28,12 @@ namespace MultiRes3d {
 		/// <summary>
 		/// Der maximale Zoom der Kamera.
 		/// </summary>
-		public const float MaxZoomFactor = 1.5f;
+		public const float MaxZoomFactor = 2.0f;
 
 		/// <summary>
 		/// Der minimale Zoom der Kamera.
 		/// </summary>
-		public const float MinZoomFactor = 0.7f;
+		public const float MinZoomFactor = 0.1f;
 
 		/// <summary>
 		/// Die initiale Position des Augpunkts.

@@ -4,6 +4,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Drawing;
+using System.Windows.Forms;
 
 namespace MultiRes3d {
 	/// <summary>
@@ -143,6 +144,32 @@ namespace MultiRes3d {
 					renderer.Dispose();
 			}
 			base.Dispose(disposing);
+		}
+
+		/// <summary>
+		/// Überschrieben, um auch Key Events für Pfeiltasten zu erhalten, was standardmäßig
+		/// nicht geschieht.
+		/// </summary>
+		/// <param name="keyData">
+		/// Der gedrückte Key.
+		/// </param>
+		/// <returns>
+		/// true, wenn eine gültige Eingabetaste; andernfalls false.
+		/// </returns>
+		protected override bool IsInputKey(Keys keyData) {
+			switch (keyData) {
+				case Keys.Right:
+				case Keys.Left:
+				case Keys.Up:
+				case Keys.Down:
+					return true;
+				case Keys.Shift | Keys.Right:
+				case Keys.Shift | Keys.Left:
+				case Keys.Shift | Keys.Up:
+				case Keys.Shift | Keys.Down:
+					return true;
+			}
+			return base.IsInputKey(keyData);
 		}
 
 		#region Input Processing

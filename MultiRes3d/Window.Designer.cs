@@ -85,6 +85,7 @@
 			this.viewport3d.Size = new System.Drawing.Size(633, 430);
 			this.viewport3d.TabIndex = 1;
 			this.viewport3d.VSync = true;
+			this.viewport3d.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnKeyDown);
 			// 
 			// Window
 			// 

@@ -182,6 +182,7 @@ namespace MultiRes3d {
 			Render();
 		}
 
+		float cameraZoom;
 		/// <summary>
 		/// Rendert die Szene.
 		/// </summary>
@@ -189,11 +190,12 @@ namespace MultiRes3d {
 			// Color und Depthbuffer löschen.
 			control.Clear(clearColor);
 			// Müssen wir die Projektionsmatrix neu berechnen?
-			if (updateProjectionMatrix) {
-				projectionMatrix = Matrix.PerspectiveFovLH(fov, aspectRatio,
+			if (updateProjectionMatrix || (camera.ZoomFactor != cameraZoom)) {
+				projectionMatrix = Matrix.PerspectiveFovLH(fov * camera.ZoomFactor, aspectRatio,
 					nearClippingPlaneDistance, farClippingPlaneDistance);
 				updateProjectionMatrix = false;
 			}
+			cameraZoom = camera.ZoomFactor;
 			var viewMatrix = camera.ViewMatrix;
 			// Per-Frame Variablen des Effekts aktualisieren.
 			effect.SetDirectionalLight(directionalLight);

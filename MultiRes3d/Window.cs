@@ -1,7 +1,6 @@
 ﻿using SlimDX;
 using SlimDX.Direct3D11;
 using System;
-using System.Drawing;
 using System.Windows.Forms;
 
 namespace MultiRes3d {
@@ -10,6 +9,7 @@ namespace MultiRes3d {
 	/// </summary>
 	public partial class Window : Form {
 		FrameCounter frameCounter = new FrameCounter();
+		PM pm;
 
 		/// <summary>
 		/// Initialisiert eine neue Instanz der Window-Klasse.
@@ -38,6 +38,9 @@ namespace MultiRes3d {
 		/// Die Zeitspanne, die seit dem letzten Aufruf vergangen ist.
 		/// </param>
 		void Update(double deltaTime) {
+			viewport3d.PointLight.Position = viewport3d.Camera.Eye;
+			//	+ viewport3d.Camera.Up.Normalized() * -2;
+
 		}
 
 		/// <summary>
@@ -66,9 +69,35 @@ namespace MultiRes3d {
 		/// Die Event Parameter.
 		/// </param>
 		void OnClickMenuOpen(object sender, EventArgs e) {
-			if (openFileDialog.ShowDialog() == DialogResult.OK) {
-				MessageBox.Show(openFileDialog.FileName);
+			if (openFileDialog.ShowDialog() != DialogResult.OK)
+				return;
+			try {
+				var mesh = ObjIO.Load(openFileDialog.FileName);
+				var test = new PM(viewport3d, mesh);
+				test.Scale = 0.15f;
+				test.Position = new Vector3(test.Position.X, test.Position.Y - .5f, test.Position.Z);
+
+				SetRenderObject(test);
+			} catch (Exception ex) {
+				MessageBox.Show(ex.Message, "Fehler beim Einlesen der Mesh",
+					MessageBoxButtons.OK, MessageBoxIcon.Error);
 			}
+		}
+
+		/// <summary>
+		/// Setzt das angegebene Objekt als neues Renderobjekt.
+		/// </summary>
+		/// <param name="mesh">
+		/// Das Objekt, das als neues Renderobjekt gesetzt werden soll.
+		/// </param>
+		void SetRenderObject(PM mesh) {
+			// Alte PM entfernen und entsorgen.
+			if (pm != null) {
+				viewport3d.Entities.Remove(pm);
+				pm.Dispose();
+			}
+			pm = mesh;
+			viewport3d.Entities.Add(pm);
 		}
 
 		/// <summary>
@@ -86,8 +115,6 @@ namespace MultiRes3d {
 			Close();
 		}
 
-		Mesh testMesh;
-		PM pm;
 
 		/// <summary>
 		/// Event Methode, die aufgerufen wird, wenn das Fenster fertig initialisiert
@@ -100,21 +127,20 @@ namespace MultiRes3d {
 		/// Die Event Parameter.
 		/// </param>
 		void OnLoad(object sender, EventArgs e) {
-			testMesh = ObjIO.Load("Testdata/bunny.obj");
+			
+			var testMesh = ObjIO.Load("Testdata/bunny.obj");
 
 			// 1. PM aus testMesh erstellen.
-			pm = new PM(viewport3d, testMesh);
-			pm.Scale = 0.15f;
+			var test = new PM(viewport3d, testMesh);
+			test.Scale = 0.15f;
+			test.Position = new Vector3(test.Position.X, test.Position.Y - .5f, test.Position.Z);
 
-			// 2. PM viewport.Entities hinzufügen.
-			viewport3d.Entities.Add(pm);
-
+			SetRenderObject(test);
+			
 			viewport3d.PointLight.Ambient = new Color4(0.34f, 0.34f, 0.34f);
-
-			viewport3d.PointLight.Diffuse = new Color4(0.7f, 0.5f, 0.3f);
-			viewport3d.PointLight.Position = new Vector3(0.8f, 1f, -0.5f);
-			viewport3d.PointLight.Attenuation = new Vector3(0.0f, 0.5f, 0.0f);
-			viewport3d.PointLight.Range = 3.03f;
+			viewport3d.PointLight.Diffuse = new Color4(0.8f, 0.5f, 0.5f);
+			viewport3d.PointLight.Attenuation = new Vector3(0.5f, 0.1f, 0.0f);
+			viewport3d.PointLight.Range = 7.03f;
 		}
 
 		/// <summary>
@@ -132,6 +158,46 @@ namespace MultiRes3d {
 				pm.Dispose();
 			}
 
+		}
+
+		/// <summary>
+		/// Event Methode, die aufgerufen wird, wenn eine Taste gedrückt wurde.
+		/// </summary>
+		/// <param name="sender">
+		/// Der Sender des Events.
+		/// </param>
+		/// <param name="e">
+		/// Die Event Parameter.
+		/// </param>
+		void OnKeyDown(object sender, KeyEventArgs e) {
+			float moveStep = .1f;
+			float scaleStep = .01f;
+			if (pm == null)
+				return;
+			switch (e.KeyCode) {
+				case Keys.D1:
+					viewport3d.FillMode = FillMode.Solid;
+					break;
+				case Keys.D2:
+					viewport3d.FillMode = FillMode.Wireframe;
+					break;
+				case Keys.Up:
+					pm.Y += moveStep;
+					break;
+				case Keys.Down:
+					pm.Y -= moveStep;
+					break;
+				case Keys.W:
+					pm.Scale += scaleStep;
+					break;
+				case Keys.S:
+					pm.Scale -= scaleStep;
+					break;
+				case Keys.R:
+					pm.Scale = 1.0f;
+					pm.Position = Vector3.Zero;
+					break;
+			}
 		}
 	}
 }
