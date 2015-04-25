@@ -124,7 +124,7 @@ namespace MultiRes3d {
 		public void OnMouseWheel(MouseEventArgs e) {
 			float amount = System.Math.Sign(e.Delta) * mouseWheelNotch;
 			if (camera.Zoom(amount)) {
-				viewport3d.Render();
+		//		viewport3d.Render();
 			}
 		}
 

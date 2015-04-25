@@ -28,7 +28,6 @@
 			this.MenuOpen = new System.Windows.Forms.ToolStripMenuItem();
 			this.toolStripSeparator1 = new System.Windows.Forms.ToolStripSeparator();
 			this.MenuExit = new System.Windows.Forms.ToolStripMenuItem();
-			this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
 			this.MenuSettings = new System.Windows.Forms.ToolStripMenuItem();
 			this.MenuWireframe = new System.Windows.Forms.ToolStripMenuItem();
 			this.lightColourToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -36,7 +35,9 @@
 			this.MenuColourRed = new System.Windows.Forms.ToolStripMenuItem();
 			this.MenuColourGreen = new System.Windows.Forms.ToolStripMenuItem();
 			this.MenuColourBlue = new System.Windows.Forms.ToolStripMenuItem();
+			this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
 			this.viewport3d = new MultiRes3d.Viewport3d();
+			this.MenuShowHelp = new System.Windows.Forms.ToolStripMenuItem();
 			this.menuStrip.SuspendLayout();
 			this.SuspendLayout();
 			// 
@@ -80,15 +81,12 @@
 			this.MenuExit.Text = "Exit";
 			this.MenuExit.Click += new System.EventHandler(this.OnClickMenuExit);
 			// 
-			// openFileDialog
-			// 
-			this.openFileDialog.Filter = "Obj files|*.obj|All files|*.*";
-			// 
 			// MenuSettings
 			// 
 			this.MenuSettings.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.MenuWireframe,
-            this.lightColourToolStripMenuItem});
+            this.lightColourToolStripMenuItem,
+            this.MenuShowHelp});
 			this.MenuSettings.Name = "MenuSettings";
 			this.MenuSettings.Size = new System.Drawing.Size(61, 20);
 			this.MenuSettings.Text = "Settings";
@@ -117,30 +115,34 @@
 			this.MenuColourNeutral.Checked = true;
 			this.MenuColourNeutral.CheckState = System.Windows.Forms.CheckState.Checked;
 			this.MenuColourNeutral.Name = "MenuColourNeutral";
-			this.MenuColourNeutral.Size = new System.Drawing.Size(152, 22);
+			this.MenuColourNeutral.Size = new System.Drawing.Size(113, 22);
 			this.MenuColourNeutral.Text = "Neutral";
 			this.MenuColourNeutral.Click += new System.EventHandler(this.OnClickMenuColour);
 			// 
 			// MenuColourRed
 			// 
 			this.MenuColourRed.Name = "MenuColourRed";
-			this.MenuColourRed.Size = new System.Drawing.Size(152, 22);
+			this.MenuColourRed.Size = new System.Drawing.Size(113, 22);
 			this.MenuColourRed.Text = "Red";
 			this.MenuColourRed.Click += new System.EventHandler(this.OnClickMenuColour);
 			// 
 			// MenuColourGreen
 			// 
 			this.MenuColourGreen.Name = "MenuColourGreen";
-			this.MenuColourGreen.Size = new System.Drawing.Size(152, 22);
+			this.MenuColourGreen.Size = new System.Drawing.Size(113, 22);
 			this.MenuColourGreen.Text = "Green";
 			this.MenuColourGreen.Click += new System.EventHandler(this.OnClickMenuColour);
 			// 
 			// MenuColourBlue
 			// 
 			this.MenuColourBlue.Name = "MenuColourBlue";
-			this.MenuColourBlue.Size = new System.Drawing.Size(152, 22);
+			this.MenuColourBlue.Size = new System.Drawing.Size(113, 22);
 			this.MenuColourBlue.Text = "Blue";
 			this.MenuColourBlue.Click += new System.EventHandler(this.OnClickMenuColour);
+			// 
+			// openFileDialog
+			// 
+			this.openFileDialog.Filter = "Obj files|*.obj|All files|*.*";
 			// 
 			// viewport3d
 			// 
@@ -152,6 +154,16 @@
 			this.viewport3d.TabIndex = 1;
 			this.viewport3d.VSync = true;
 			this.viewport3d.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnKeyDown);
+			// 
+			// MenuShowHelp
+			// 
+			this.MenuShowHelp.Checked = true;
+			this.MenuShowHelp.CheckOnClick = true;
+			this.MenuShowHelp.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.MenuShowHelp.Name = "MenuShowHelp";
+			this.MenuShowHelp.Size = new System.Drawing.Size(152, 22);
+			this.MenuShowHelp.Text = "Show Help";
+			this.MenuShowHelp.Click += new System.EventHandler(this.OnClickShowHelp);
 			// 
 			// Window
 			// 
@@ -188,6 +200,7 @@
 		private System.Windows.Forms.ToolStripMenuItem MenuColourRed;
 		private System.Windows.Forms.ToolStripMenuItem MenuColourGreen;
 		private System.Windows.Forms.ToolStripMenuItem MenuColourBlue;
+		private System.Windows.Forms.ToolStripMenuItem MenuShowHelp;
 	}
 }
 

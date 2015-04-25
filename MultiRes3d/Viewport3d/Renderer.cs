@@ -215,7 +215,10 @@ namespace MultiRes3d {
 				ent.Render(context, effect);
 			}
 			// Sprite-Renderer flushen, um evtl. gecachete Sprites zu zeichnen.
+			var oldFillMode = control.FillMode;
+			control.FillMode = FillMode.Solid;
 			spriteRenderer.Flush();
+			control.FillMode = oldFillMode;
 		}
 
 		/// <summary>
@@ -259,7 +262,7 @@ namespace MultiRes3d {
 				throw new InvalidOperationException("Die spriteRenderer Instanz wurde " +
 					"bereits initialisiert.");
 			}
-			spriteRenderer = new SpriteRenderer(control.Device);
+			spriteRenderer = new SpriteRenderer(control.Device, 256);
 			font = new TextBlockRenderer(spriteRenderer, "Arial", FontWeight.Normal,
 				SlimDX.DirectWrite.FontStyle.Normal, FontStretch.Normal, 14);
 			// Virtuelle Auflösung von 640x480 zum Positionieren von Text benutzen.

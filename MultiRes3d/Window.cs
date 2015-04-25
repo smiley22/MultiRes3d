@@ -12,6 +12,9 @@ namespace MultiRes3d {
 	public partial class Window : Form {
 		FrameCounter frameCounter = new FrameCounter();
 		PM pm;
+		static string version = string.Format("{0} {1}", Application.ProductName,
+			Application.ProductVersion.Substring(0, 3));
+		bool showHelp = true;
 
 		/// <summary>
 		/// Initialisiert eine neue Instanz der Window-Klasse.
@@ -40,8 +43,10 @@ namespace MultiRes3d {
 		/// Die Zeitspanne, die seit dem letzten Aufruf vergangen ist.
 		/// </param>
 		void Update(double deltaTime) {
+			if (showHelp)
+				DrawHelpText();
+
 			viewport3d.PointLight.Position = viewport3d.Camera.Eye;
-			//	+ viewport3d.Camera.Up.Normalized() * -2;
 
 		}
 
@@ -103,6 +108,31 @@ namespace MultiRes3d {
 		}
 
 		/// <summary>
+		/// Rendert eine kleine "Bedienungsanleitung" zur Benutzung der Anwendung.
+		/// </summary>
+		void DrawHelpText() {
+			var dict = new Dictionary<string, string>() {
+				{ "1", "Solid Mode" },
+				{ "2", "Wireframe Mode" },
+				{ "W", "Increase Object Scale" },
+				{ "S", "Decrease Object Scale" },
+				{ "↑", "Move Up Object" },
+				{ "↓", "Move Down Object" },
+				{ "R", "Reset Settings" }
+			};
+			int xKey = 10,
+				xText = 40,
+				y = 40,
+				lineHeight = 18;
+			foreach (var pair in dict) {
+				viewport3d.DrawString(pair.Key, new Vector2(xKey, y), Color.FromArgb(0, 255, 0));
+				viewport3d.DrawString(pair.Value, new Vector2(xText, y), Color.White);
+				y += lineHeight;
+			}
+			viewport3d.DrawString(version, new Vector2(10, 10), Color.White);
+		}
+
+		/// <summary>
 		/// Event Methode, die aufgerufen wird, wenn der Menüpunkt "File -> Close"
 		/// betätigt wird.
 		/// </summary>
@@ -158,7 +188,6 @@ namespace MultiRes3d {
 				viewport3d.Entities.Remove(pm);
 				pm.Dispose();
 			}
-
 		}
 
 		/// <summary>
@@ -260,6 +289,20 @@ namespace MultiRes3d {
 			OnClickMenuColour(MenuColourNeutral, EventArgs.Empty);
 			// Kamera muss nicht zurückgesetzt werden, da dies bereits vom Viewport3d
 			// Control erledigt wird (siehe InputProcessor).
+		}
+
+		/// <summary>
+		/// Event Methode, die aufgerufen wird, wenn der Menüpunkt "Settings -> Show Help"
+		/// betätigt wird.
+		/// </summary>
+		/// <param name="sender">
+		/// Der Sender des Events.
+		/// </param>
+		/// <param name="e">
+		/// Die Event Parameter.
+		/// </param>
+		void OnClickShowHelp(object sender, EventArgs e) {
+			showHelp = MenuShowHelp.Checked;
 		}
 	}
 }
