@@ -10,7 +10,7 @@ namespace MultiRes3d {
 		/// <summary>
 		/// Der Index des Vertex, der "gespalten" wird.
 		/// </summary>
-		public int S;
+		public uint S;
 
 		/// <summary>
 		/// Die neue Position des Vertex nach der Aufspaltung.

@@ -262,7 +262,7 @@ namespace MultiRes3d {
 				throw new InvalidOperationException("Die spriteRenderer Instanz wurde " +
 					"bereits initialisiert.");
 			}
-			spriteRenderer = new SpriteRenderer(control.Device, 256);
+			spriteRenderer = new SpriteRenderer(control.Device, 512);
 			font = new TextBlockRenderer(spriteRenderer, "Arial", FontWeight.Normal,
 				SlimDX.DirectWrite.FontStyle.Normal, FontStretch.Normal, 14);
 			// Virtuelle Auflösung von 640x480 zum Positionieren von Text benutzen.

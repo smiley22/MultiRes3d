@@ -54,6 +54,7 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Datastructures\Face.cs" />
     <Compile Include="Datastructures\Mesh.cs" />
     <Compile Include="Datastructures\PM.cs" />
     <Compile Include="Datastructures\Triangle.cs" />

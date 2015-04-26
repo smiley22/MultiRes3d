@@ -1,5 +1,6 @@
 ﻿using SlimDX;
 using System;
+using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Text.RegularExpressions;
@@ -29,41 +30,26 @@ namespace MultiRes3d {
 		/// Die angegebene Datei konnte nicht gelesen werden.
 		/// </exception>
 		public static Mesh Load(string path) {
-			var mesh = new Mesh();
+			var normals = new List<Vector3>();
+			var verts = new List<Vertex>();
+			var faces = new List<Triangle>();
+			var splits = new Queue<VertexSplit>();
 			using (var sr = File.OpenText(path)) {
 				string l = string.Empty;
 				while ((l = sr.ReadLine()) != null) {
-					if (l.StartsWith("v "))
-						mesh.Vertices.Add(ParseVertex(l));
-					else if (l.StartsWith("f "))
-						mesh.Faces.Add(ParseFace(l));
-					else if (l.StartsWith("#vsplit "))
-						mesh.Splits.Enqueue(ParseVertexSplit(l));
+					if (l.StartsWith("v ")) {
+						verts.Add(ParseVertex(l));
+						normals.Add(Vector3.Zero);
+					} else if (l.StartsWith("f ")) {
+						var face = ParseFace(l);
+						ComputeNormals(face, verts);
+						faces.Add(face);
+					} else if (l.StartsWith("#vsplit ")) {
+						splits.Enqueue(ParseVertexSplit(l));
+					}
 				}
 			}
-			FixUpNormals(mesh);
-			return mesh;
-		}
-
-		static void FixUpNormals(Mesh m) {
-			foreach (var f in m.Faces) {
-				var d1 = m.Vertices[f.Indices[1]].Position - m.Vertices[f.Indices[0]].Position;
-				var d2 = m.Vertices[f.Indices[2]].Position - m.Vertices[f.Indices[0]].Position;
-
-				d1.Normalize();
-				d2.Normalize();
-				var normal = Vector3.Cross(d1, d2);
-				f.Normal = normal;
-				for(int i = 0; i < 3; i++) {
-					var v = m.Vertices[f.Indices[i]];
-
-					m.Vertices[f.Indices[i]] = new Vertex() {
-						Position = v.Position,
-						Normal = normal
-					};
-				}
-
-			}
+			return new Mesh(verts, faces, splits);
 		}
 
 		/// <summary>
@@ -86,7 +72,8 @@ namespace MultiRes3d {
 				Position = new Vector3(
 					float.Parse(p[1], CultureInfo.InvariantCulture),
 					float.Parse(p[2], CultureInfo.InvariantCulture),
-					float.Parse(p[3], CultureInfo.InvariantCulture))
+					float.Parse(p[3], CultureInfo.InvariantCulture)),
+				Normal = Vector3.Zero
 			};
 		}
 
@@ -107,9 +94,9 @@ namespace MultiRes3d {
 			if (p.Length != 4)
 				throw new InvalidOperationException("Invalid face: " + l);
 			var indices = new[] {
-				int.Parse(p[1]) - 1,
-				int.Parse(p[2]) - 1,
-				int.Parse(p[3]) - 1
+				uint.Parse(p[1]) - 1,
+				uint.Parse(p[2]) - 1,
+				uint.Parse(p[3]) - 1
 			};
 			return new Triangle(indices);
 		}
@@ -153,7 +140,8 @@ namespace MultiRes3d {
 			if (!m.Success)
 				throw new InvalidOperationException("Invalid vsplit: " + l);
 			var s = new VertexSplit() {
-				S = int.Parse(m.Groups[1].Value),
+				// FIXME: Fixup S index!!!!!
+				S = uint.Parse(m.Groups[1].Value),
 				SPosition = ParseVector(m.Groups[2].Value),
 				TPosition = ParseVector(m.Groups[3].Value)
 			};
@@ -164,13 +152,37 @@ namespace MultiRes3d {
 				if (!_m.Success)
 					throw new InvalidOperationException("Invalid face index entry in vsplit: " + l);
 				var indices = new[] {
-					int.Parse(_m.Groups[1].Value) - 1,
-					int.Parse(_m.Groups[2].Value) - 1,
-					int.Parse(_m.Groups[3].Value) - 1
+					uint.Parse(_m.Groups[1].Value) - 1,
+					uint.Parse(_m.Groups[2].Value) - 1,
+					uint.Parse(_m.Groups[3].Value) - 1
 				};
 				s.Faces.Add(new Triangle(indices));
 			}
 			return s;
+		}
+
+		/// <summary>
+		/// Fügt die Normale der Facette den Normalen der Vertices anteilig hinzu.
+		/// </summary>
+		/// <param name="f">
+		/// Die Facette.
+		/// </param>
+		/// <param name="v">
+		/// Die Liste der Vertices.
+		/// </param>
+		static void ComputeNormals(Triangle f, IList<Vertex> v) {
+			var d1 = v[(int) f.Indices[1]].Position - v[(int) f.Indices[0]].Position;
+			var d2 = v[(int) f.Indices[2]].Position - v[(int) f.Indices[0]].Position;
+			d1.Normalize();
+			d2.Normalize();
+			var normal = Vector3.Cross(d1, d2);
+			for (int i = 0; i < 3; i++) {
+				var vertex = v[(int) f.Indices[i]];
+				v[(int) f.Indices[i]] = new Vertex() {
+					Position = vertex.Position,
+					Normal = (vertex.Normal + normal).Normalized()
+				};
+			}
 		}
 	}
 }

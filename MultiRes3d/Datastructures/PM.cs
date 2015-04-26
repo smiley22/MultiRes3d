@@ -2,9 +2,7 @@
 using SlimDX.Direct3D11;
 using SlimDX.DXGI;
 using System;
-using System.Collections.Generic;
 using System.Drawing;
-using System.Linq;
 using Buffer = SlimDX.Direct3D11.Buffer;
 using MapFlags = SlimDX.Direct3D11.MapFlags;
 
@@ -21,27 +19,34 @@ namespace MultiRes3d {
 		Mesh mesh;
 		int numberOfSplits;
 
+		/// <summary>
+		/// Liefert die Anzahl der VertexSplit Einträge der PM.
+		/// </summary>
 		public int NumberOfSplits {
 			get {
 				return numberOfSplits;
 			}
 		}
 
+		/// <summary>
+		/// 
+		/// </summary>
 		public int CurrentSplit {
 			get {
 				return numberOfSplits - mesh.Splits.Count;
 			}
 		}
 
-		public IList<Vertex> Vertices {
+		public int NumberOfVertices {
 			get {
-				return mesh.Vertices;
+				return mesh.NumberOfVertices;
 			}
 		}
 
-		public IList<Triangle> Faces {
+
+		public int NumberOfFaces {
 			get {
-				return mesh.Faces;
+				return mesh.NumberOfFaces;
 			}
 		}
 
@@ -58,40 +63,39 @@ namespace MultiRes3d {
 			mesh = m;
 			numberOfSplits = mesh.Splits.Count;
 			this.viewport3d = viewport3d;
-			// Platz im Vertexbuffer: Anzahl der Vertices der Grundmesh +
-			//						  Anzahl der SplitRecords.
-			vertexBuffer = CreateVertexBuffer(m.Vertices.Count + m.Splits.Count, m.Vertices);
-			// Indexbuffer analog dazu.
-			indexBuffer = CreateIndexBuffer((m.Splits.Count * 2 + m.Faces.Count) * 3, m.Faces);
+			vertexBuffer = CreateVertexBuffer(m.Vertices.Length);
+			indexBuffer = CreateIndexBuffer(m.FlatFaces.Length);
 			inputLayout = CreateInputLayout();
 			vertexBufferBinding = new VertexBufferBinding(vertexBuffer, Vertex.Size, 0);
-
+			// Vertices und Indices in Grafikspeicher kopieren.
+			CopyData();
 		}
 
-		public void IncreaseDetail() {
-			var ctx = viewport3d.Context;
+		/// <summary>
+		/// Kopiert die Vertices und Indices in den Videospeicher der Grafikkarte.
+		/// </summary>
+		void CopyData() {
+			// Vertexbuffer in Addressraum mappen.
+			var context = viewport3d.Context;
+			DataBox db = context.MapSubresource(vertexBuffer, MapMode.WriteDiscard, MapFlags.None);
+			using (var ds = db.Data) {
+				ds.WriteRange<Vertex>(mesh.Vertices, 0, mesh.NumberOfVertices);
+			}
+			context.UnmapSubresource(vertexBuffer, 0);
+			// Indexbuffer in Addressraum mappen.
+			db = context.MapSubresource(indexBuffer, MapMode.WriteDiscard, MapFlags.None);
+			using (var s = db.Data) {
+				s.WriteRange<uint>(mesh.FlatFaces, 0, mesh.NumberOfFaces * 3);
+			}
+			context.UnmapSubresource(indexBuffer, 0);
+		}
+
+		public void IncreaseDetail(bool maxDetail = false) {
 			mesh.PerformVertexSplit();
-
-			// Upload new data to vram.
-			DataBox db = ctx.MapSubresource(vertexBuffer, MapMode.WriteDiscard, MapFlags.None);
-			using (var s = db.Data) {
-				s.WriteRange<Vertex>(mesh.Vertices.ToArray());
+			if (maxDetail) {
+				while (mesh.PerformVertexSplit()) ;
 			}
-			ctx.UnmapSubresource(vertexBuffer, 0);
-
-			var indices = new uint[mesh.Faces.Count * 3];
-			for (int i = 0; i < mesh.Faces.Count; i++) {
-				for (int c = 0; c < 3; c++) {
-					indices[i * 3 + c] = Convert.ToUInt32(mesh.Faces[i].Indices[c]);
-				}
-			}
-			db = ctx.MapSubresource(indexBuffer, MapMode.WriteDiscard, MapFlags.None);
-			using (var s = db.Data) {
-				s.WriteRange<uint>(indices);
-			}
-			ctx.UnmapSubresource(indexBuffer, 0);
-
-
+			CopyData();
 		}
 
 		/// <summary>
@@ -111,8 +115,7 @@ namespace MultiRes3d {
 			var tech = effect.ColorLitTech;
 			for (int i = 0; i < tech.Description.PassCount; i++) {
 				tech.GetPassByIndex(i).Apply(context);
-
-				context.DrawIndexed(mesh.Faces.Count * 3, 0, 0);
+				context.DrawIndexed(mesh.NumberOfFaces * 3, 0, 0);
 			}
 		}
 
@@ -167,62 +170,39 @@ namespace MultiRes3d {
 			effect.SetColor(Color.Gray);
 		}
 
-
 		#region D3D11 Initialisierungen
 		/// <summary>
 		/// Erstellt den Vertexbuffer für die Vertex-Daten der Mesh.
 		/// </summary>
 		/// <param name="maxVertices">
-		/// Die max. Anzahl an Vertices, die im Buffer gespeichert können werden sollen.
+		/// Die max. Anzahl an Vertices, die im Buffer gespeichert werden sollen.
 		/// </param>
-		/// <param name="vertices"></param>
 		/// <returns>
 		/// Eine initialisierte Instanz der Buffer-Klasse, die den VertexBuffer
 		/// repräsentiert.
 		/// </returns>
-		Buffer CreateVertexBuffer(int maxVertices, IList<Vertex> vertices) {
+		Buffer CreateVertexBuffer(int maxVertices) {
 			var desc = new BufferDescription(Vertex.Size * maxVertices,
 				ResourceUsage.Dynamic, BindFlags.VertexBuffer, CpuAccessFlags.Write,
 				ResourceOptionFlags.None, 0);
-			var buf = new Buffer(viewport3d.Device, desc);
-//				new DataStream(vertices.ToArray(), true, false), desc);
-			var dbox = viewport3d.Context.MapSubresource(buf, MapMode.WriteDiscard, MapFlags.None);
-			using (var s = dbox.Data) {
-				s.WriteRange<Vertex>(vertices.ToArray());
-			}
-			viewport3d.Context.UnmapSubresource(buf, 0);
-
-			return buf;
+			return new Buffer(viewport3d.Device, desc);
 		}
 
 		/// <summary>
 		/// Erstellt den Indexbuffer für die Indices der Facetten der Mesh.
 		/// </summary>
 		/// <param name="maxIndices">
-		/// Die max. Anzahl an Indices, die im Buffer gespeichert können werden sollen.
+		/// Die max. Anzahl an Indices, die im Buffer gespeichert werden sollen.
 		/// </param>
-		/// <param name="faces"></param>
 		/// <returns>
 		/// Eine initialisierte Instanz der Buffer-Klasse, die den IndexBuffer
 		/// repräsentiert.
 		/// </returns>
-		Buffer CreateIndexBuffer(int maxIndices, IList<Triangle> faces) {
+		Buffer CreateIndexBuffer(int maxIndices) {
 			var desc = new BufferDescription(sizeof(uint) * maxIndices,
 				ResourceUsage.Dynamic, BindFlags.IndexBuffer, CpuAccessFlags.Write,
 				ResourceOptionFlags.None, 0);
-			var buf = new Buffer(viewport3d.Device, desc);
-			var indices = new uint[faces.Count * 3];
-			for(int i = 0; i < faces.Count; i++) {
-				for(int c = 0; c < 3; c++) {
-					indices[i * 3 + c] = Convert.ToUInt32(faces[i].Indices[c]);
-				}
-			}
-			var dbox = viewport3d.Context.MapSubresource(buf, MapMode.WriteDiscard, MapFlags.None);
-			using (var s = dbox.Data) {
-				s.WriteRange<uint>(indices);
-			}
-			viewport3d.Context.UnmapSubresource(buf, 0);
-			return buf;
+			return new Buffer(viewport3d.Device, desc);
 		}
 
 		/// <summary>

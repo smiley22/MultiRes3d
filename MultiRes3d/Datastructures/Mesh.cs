@@ -1,25 +1,58 @@
-﻿using System;
+﻿using SlimDX;
 using System.Collections.Generic;
 using System.Linq;
-using System.Windows.Forms;
 
 namespace MultiRes3d {
 	/// <summary>
 	/// Repräsentiert ein (progressives) Polygonnetz.
 	/// </summary>
+	/// <remarks>
+	/// Basiert auf der Mesh-Klasse aus MeshSimplify, aber an D3D bzw. Grafikhardware
+	/// angepaßt, um bessere Performanz zu erzielen.
+	/// </remarks>
 	public class Mesh {
+		IDictionary<uint, ISet<Face>> incidentFaces;
+		IList<Face> _faces = new List<Face>();
+
 		/// <summary>
 		/// Die Vertices des Polgyonnetzes.
 		/// </summary>
-		public IList<Vertex> Vertices {
+		/// <remarks>
+		/// Vertices werden in einem fixen Buffer verwaltet mit einem Zeiger der
+		/// die Anzahl der im Buffer befindlichen Vertices angibt. So muss nicht
+		/// nach jedem VertexSplit eine neue Array Instanz aus einer Liste erzeugt
+		/// werden.
+		/// </remarks>
+		public Vertex[] Vertices {
 			get;
 			private set;
 		}
 
 		/// <summary>
-		/// Die Facetten des Polygonnetzes.
+		/// Die Anzahl der sich im <c>Vertices</c> Array befindlichen Vertices.
 		/// </summary>
-		public IList<Triangle> Faces {
+		public int NumberOfVertices {
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Die Faces des Polygonnetzes als sequentielle Liste von Indices.
+		/// </summary>
+		/// <remarks>
+		/// Je 3 Indices repräsentieren eine Facette. Die Facetten werden als primitives
+		/// uint-Array gespeichert, da sie so direkt in den Videospeicher der Grafikkarte
+		/// kopiert werden können.
+		/// </remarks>
+		public uint[] FlatFaces {
+			get;
+			private set;
+		}
+
+		/// <summary>
+		/// Die Anzahl der sich im <c>FlatFaces</c> Array befindlichen Facetten.
+		/// </summary>
+		public int NumberOfFaces {
 			get;
 			private set;
 		}
@@ -36,42 +69,38 @@ namespace MultiRes3d {
 		/// Initialisiert eine neue Instanz der Mesh Klasse.
 		/// </summary>
 		/// <param name="vertices">
-		/// Eine Abzählung von Vertices, die der Mesh hinzugefügt werden sollen.
+		/// Eine Liste von Vertices, die der Mesh hinzugefügt werden sollen.
 		/// </param>
 		/// <param name="faces">
-		/// Eine Abzählung von Facetten, die der Mesh hinzugefügt werden sollen.
+		/// Eine Liste von Facetten, die der Mesh hinzugefügt werden sollen.
 		/// </param>
 		/// <param name="splits">
-		/// Eine Abzählung von Vertex-Splits, die der Mesh hinzugefügt werden sollen.
+		/// Eine Queue von Vertex-Splits, die der Mesh hinzugefügt werden sollen.
 		/// </param>
-		public Mesh(IEnumerable<Vertex> vertices = null, IEnumerable<Triangle> faces = null,
-			IEnumerable<VertexSplit> splits = null) {
-			Vertices = new List<Vertex>();
-			Faces = new List<Triangle>();
+		public Mesh(IList<Vertex> vertices, IList<Triangle> faces, Queue<VertexSplit> splits) {
+			Vertices = new Vertex[vertices.Count + splits.Count];
+			NumberOfVertices = vertices.Count;
+			for (int i = 0; i < vertices.Count; i++)
+				Vertices[i] = vertices[i];
+			FlatFaces = new uint[(faces.Count + 2 * splits.Count) * 3];
+			NumberOfFaces = faces.Count;
 			Splits = new Queue<VertexSplit>();
-			if (vertices != null) {
-				foreach (var v in vertices)
-					Vertices.Add(v);
-			}
-			if (faces != null) {
-				foreach (var f in faces)
-					Faces.Add(f);
-			}
-			if (splits != null) {
-				foreach (var s in splits)
-					Splits.Enqueue(s);
-			}
+
+			for (int i = 0; i < faces.Count; i++)
+				_faces.Add(new Face(faces[i].Indices, FlatFaces, i * 3));
+			foreach (var s in splits)
+				Splits.Enqueue(s);
 		}
 
-		IDictionary<int, ISet<Triangle>> _incidentFaces;
 
-		public void PerformVertexSplit() {
+		public bool PerformVertexSplit() {
 			if (Splits.Count == 0)
-				return;
-			if (_incidentFaces == null)
-				_incidentFaces = ComputeIncidentFaces();
+				return false;
+			if (incidentFaces == null)
+				incidentFaces = ComputeIncidentFaces();
 			var split = Splits.Dequeue();
-			PerformVertexSplit(split, _incidentFaces);
+			PerformVertexSplit(split);
+			return true;
 		}
 
 		/// <summary>
@@ -80,13 +109,13 @@ namespace MultiRes3d {
 		/// <returns>
 		/// Eine Map die jedem Vertex der Mesh die Menge seiner inzidenten Facetten zuordnet.
 		/// </returns>
-		IDictionary<int, ISet<Triangle>> ComputeIncidentFaces() {
-			var dict = new Dictionary<int, ISet<Triangle>>();
-			for (int i = 0; i < Vertices.Count; i++)
-				dict.Add(i, new HashSet<Triangle>());
-			foreach (var f in Faces) {
-				for (int c = 0; c < f.Indices.Length; c++) {
-					dict[f.Indices[c]].Add(f);
+		IDictionary<uint, ISet<Face>> ComputeIncidentFaces() {
+			var dict = new Dictionary<uint, ISet<Face>>();
+			for (uint i = 0; i < NumberOfVertices; i++)
+				dict.Add(i, new HashSet<Face>());
+			foreach (var f in _faces) {
+				for (int c = 0; c < 3; c++) {
+					dict[f[c]].Add(f);
 				}
 			}
 			return dict;
@@ -98,29 +127,23 @@ namespace MultiRes3d {
 		/// <param name="split">
 		/// Die Vertex-Split Operation, die ausgeführt werden soll.
 		/// </param>
-		/// <param name="incidentFaces">
-		/// Eine Map die jedem Vertex der Mesh die Menge seiner inzidenten Facetten zuordnet.
-		/// </param>
-		void PerformVertexSplit(VertexSplit split, IDictionary<int, ISet<Triangle>> incidentFaces) {
+		void PerformVertexSplit(VertexSplit split) {
 			// 1. Vertex s wird an neue Position verschoben.
-			var oldNormal = Vertices[split.S].Normal;
-			Vertices[split.S] = new Vertex() {
-				Position = split.SPosition,
-				Normal = oldNormal
-			};
+			Vertices[split.S] = new Vertex() { Position = split.SPosition };
 			// 2. Vertex t wird neu zur Mesh hinzugefügt.
-			Vertices.Add(new Vertex() { Position = split.TPosition });
-			var t = Vertices.Count - 1;
+			Vertices[NumberOfVertices] = new Vertex() { Position = split.TPosition };
+			uint t = (uint)NumberOfVertices;
+			NumberOfVertices++;
 			// 3. Alle Facetten von s, die ursprünglich t "gehört" haben, auf t zurückbiegen.
 			var facesOfS = incidentFaces[split.S];
-			var facesOfT = new HashSet<Triangle>();
+			var facesOfT = new HashSet<Face>();
 			incidentFaces.Add(t, facesOfT);
-			var removeFromS = new HashSet<Triangle>();
+			var removeFromS = new HashSet<Face>();
 			foreach (var f in facesOfS) {
 				var _c = IsOriginalFaceOfT(t, f, split);
 				if (_c < 0)
 					continue;
-				f.Indices[_c] = t;
+				f[_c] = t;
 				facesOfT.Add(f);
 				removeFromS.Add(f);
 			}
@@ -130,11 +153,24 @@ namespace MultiRes3d {
 			foreach (var f in split.Faces) {
 				if (!f.Indices.Contains(split.S))
 					continue;
-				var newFace = new Triangle(f.Indices);
-				Faces.Add(newFace);
-				for (int c = 0; c < newFace.Indices.Length; c++)
-					incidentFaces[newFace.Indices[c]].Add(newFace);
+				var newFace = new Face(f.Indices, FlatFaces, NumberOfFaces * 3);
+				NumberOfFaces++;
+				for (int c = 0; c < 3; c++)
+					incidentFaces[newFace[c]].Add(newFace);
 			}
+			// Normalen von s und t neuberechnen. Eigentlich müssten auch die Normalen
+			// der restlichen Vertices der inzidenten Facetten neuberechnet werden, aber
+			// das hier reicht schon aus, damit es ganz gut aussieht.
+			var oldPos = Vertices[split.S].Position;
+			Vertices[split.S] = new Vertex() {
+				Position = oldPos,
+				Normal = ComputeVertexNormal(split.S)
+			};
+			oldPos = Vertices[t].Position;
+			Vertices[t] = new Vertex() {
+				Position = oldPos,
+				Normal = ComputeVertexNormal(t)
+			};
 		}
 
 		/// <summary>
@@ -158,14 +194,14 @@ namespace MultiRes3d {
 		/// werden: Eine Methode zum Prüfen mit Rückgabewert Bool und eine Methode zum
 		/// Abfragen des Index. Aus Geschwindigkeitsgründen ist dies aber ungünstig.
 		/// </remarks>
-		int IsOriginalFaceOfT(int t, Triangle face, VertexSplit split) {
+		int IsOriginalFaceOfT(uint t, Face face, VertexSplit split) {
 			foreach (var f in split.Faces) {
 				var index = -1;
 				var isface = true;
 				for (int i = 0; i < 3; i++) {
-					if (f.Indices[i] == t && face.Indices[i] == split.S) {
+					if (f.Indices[i] == t && face[i] == split.S) {
 						index = i;
-					} else if (f.Indices[i] != face.Indices[i]) {
+					} else if (f.Indices[i] != face[i]) {
 						isface = false;
 					}
 				}
@@ -175,5 +211,35 @@ namespace MultiRes3d {
 			return -1;
 		}
 
+		/// <summary>
+		/// Berechnet den Normalenvektor des angegebenen Vertex.
+		/// </summary>
+		/// <param name="v">
+		/// Der Vertex.
+		/// </param>
+		/// <returns>
+		/// Der Normalenvektor des Vertex.
+		/// </returns>
+		Vector3 ComputeVertexNormal(uint v) {
+			var normal = Vector3.Zero;
+			foreach (var face in incidentFaces[v])
+				normal = normal + ComputeFaceNormal(face);
+			return normal.Normalized();
+		}
+
+		/// <summary>
+		/// Berechnet den Normalenvektor der angegebenen Facette.
+		/// </summary>
+		/// <param name="f">
+		/// Die Facette.
+		/// </param>
+		/// <returns>
+		/// Der Normalenvektor der Facette.
+		/// </returns>
+		Vector3 ComputeFaceNormal(Face f) {
+			var d1 = Vertices[f[1]].Position - Vertices[f[0]].Position;
+			var d2 = Vertices[f[2]].Position - Vertices[f[0]].Position;
+			return Vector3.Cross(d1, d2).Normalized();
+		}
 	}
 }

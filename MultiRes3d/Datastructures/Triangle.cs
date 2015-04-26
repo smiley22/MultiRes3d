@@ -4,11 +4,14 @@ namespace MultiRes3d {
 	/// <summary>
 	/// Repräsentiert eine Facette.
 	/// </summary>
+	/// <remarks>
+	/// Indices sind uint, da D3D Indexbuffer nur mit unsigned Typen arbeiten.
+	/// </remarks>
 	public class Triangle {
 		/// <summary>
 		/// Die Indices der Vertices des Triangles.
 		/// </summary>
-		public readonly int[] Indices = new int[3];
+		public readonly uint[] Indices = new uint[3];
 
 		/// <summary>
 		/// Der Normalenvektor der Facette.
@@ -27,11 +30,10 @@ namespace MultiRes3d {
 		/// <param name="index3">
 		/// Der dritte Index.
 		/// </param>
-		public Triangle(int index1, int index2, int index3) {
+		public Triangle(uint index1, uint index2, uint index3) {
 			Indices[0] = index1;
 			Indices[1] = index2;
 			Indices[2] = index3;
-
 		}
 
 		/// <summary>
@@ -40,7 +42,7 @@ namespace MultiRes3d {
 		/// <param name="indices">
 		/// Die Indices der Vertices, die das Triangle ausmachen.
 		/// </param>
-		public Triangle(int[] indices)
+		public Triangle(uint[] indices)
 			: this(indices[0], indices[1], indices[2]) {
 		}
 	}

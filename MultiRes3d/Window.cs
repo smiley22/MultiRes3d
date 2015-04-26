@@ -141,14 +141,15 @@ namespace MultiRes3d {
 		/// Rendert einige Informationen über die Mesh wie Vertex- u. Facettenanzahl.
 		/// </summary>
 		void DrawInfoText() {
-			var percent = (int)((pm.CurrentSplit / (float) pm.NumberOfSplits) * 100);
+			var percent = pm.NumberOfSplits == 0 ? 100 :
+				(100 * pm.CurrentSplit / pm.NumberOfSplits);
 			var progression = string.Format("{0}/{1} ({2} %)", pm.CurrentSplit,
 				pm.NumberOfSplits, percent);
 			viewport3d.DrawString("Number of Vertices", new Vector2(10, 257), Color.White);
-			viewport3d.DrawString(pm.Vertices.Count.ToString(), new Vector2(160, 257),
+			viewport3d.DrawString(pm.NumberOfVertices.ToString(), new Vector2(160, 257),
 				Color.Turquoise);
 			viewport3d.DrawString("Number of Faces", new Vector2(10, 275), Color.White);
-			viewport3d.DrawString(pm.Faces.Count.ToString(), new Vector2(160, 275),
+			viewport3d.DrawString(pm.NumberOfFaces.ToString(), new Vector2(160, 275),
 				Color.Turquoise);
 			viewport3d.DrawString("Level of Progression", new Vector2(10, 305), Color.White);
 			viewport3d.DrawString(progression, new Vector2(160, 305), Color.LawnGreen);
@@ -250,6 +251,11 @@ namespace MultiRes3d {
 					break;
 				case Keys.Oemplus:
 					pm.IncreaseDetail();
+					break;
+				case Keys.OemMinus:
+					break;
+				case Keys.E:
+					pm.IncreaseDetail(true);
 					break;
 			}
 		}
