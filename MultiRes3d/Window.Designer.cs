@@ -35,9 +35,9 @@
 			this.MenuColourRed = new System.Windows.Forms.ToolStripMenuItem();
 			this.MenuColourGreen = new System.Windows.Forms.ToolStripMenuItem();
 			this.MenuColourBlue = new System.Windows.Forms.ToolStripMenuItem();
+			this.MenuShowHelp = new System.Windows.Forms.ToolStripMenuItem();
 			this.openFileDialog = new System.Windows.Forms.OpenFileDialog();
 			this.viewport3d = new MultiRes3d.Viewport3d();
-			this.MenuShowHelp = new System.Windows.Forms.ToolStripMenuItem();
 			this.menuStrip.SuspendLayout();
 			this.SuspendLayout();
 			// 
@@ -95,7 +95,7 @@
 			// 
 			this.MenuWireframe.CheckOnClick = true;
 			this.MenuWireframe.Name = "MenuWireframe";
-			this.MenuWireframe.Size = new System.Drawing.Size(152, 22);
+			this.MenuWireframe.Size = new System.Drawing.Size(140, 22);
 			this.MenuWireframe.Text = "Wireframe";
 			this.MenuWireframe.Click += new System.EventHandler(this.OnClickMenuWireframe);
 			// 
@@ -107,7 +107,7 @@
             this.MenuColourGreen,
             this.MenuColourBlue});
 			this.lightColourToolStripMenuItem.Name = "lightColourToolStripMenuItem";
-			this.lightColourToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+			this.lightColourToolStripMenuItem.Size = new System.Drawing.Size(140, 22);
 			this.lightColourToolStripMenuItem.Text = "Light Colour";
 			// 
 			// MenuColourNeutral
@@ -140,13 +140,23 @@
 			this.MenuColourBlue.Text = "Blue";
 			this.MenuColourBlue.Click += new System.EventHandler(this.OnClickMenuColour);
 			// 
+			// MenuShowHelp
+			// 
+			this.MenuShowHelp.Checked = true;
+			this.MenuShowHelp.CheckOnClick = true;
+			this.MenuShowHelp.CheckState = System.Windows.Forms.CheckState.Checked;
+			this.MenuShowHelp.Name = "MenuShowHelp";
+			this.MenuShowHelp.Size = new System.Drawing.Size(140, 22);
+			this.MenuShowHelp.Text = "Show Help";
+			this.MenuShowHelp.Click += new System.EventHandler(this.OnClickShowHelp);
+			// 
 			// openFileDialog
 			// 
 			this.openFileDialog.Filter = "Obj files|*.obj|All files|*.*";
 			// 
 			// viewport3d
 			// 
-			this.viewport3d.BackColor = System.Drawing.SystemColors.ControlLight;
+			this.viewport3d.BackColor = System.Drawing.Color.DarkGray;
 			this.viewport3d.Dock = System.Windows.Forms.DockStyle.Fill;
 			this.viewport3d.Location = new System.Drawing.Point(0, 24);
 			this.viewport3d.Name = "viewport3d";
@@ -154,16 +164,6 @@
 			this.viewport3d.TabIndex = 1;
 			this.viewport3d.VSync = true;
 			this.viewport3d.KeyDown += new System.Windows.Forms.KeyEventHandler(this.OnKeyDown);
-			// 
-			// MenuShowHelp
-			// 
-			this.MenuShowHelp.Checked = true;
-			this.MenuShowHelp.CheckOnClick = true;
-			this.MenuShowHelp.CheckState = System.Windows.Forms.CheckState.Checked;
-			this.MenuShowHelp.Name = "MenuShowHelp";
-			this.MenuShowHelp.Size = new System.Drawing.Size(152, 22);
-			this.MenuShowHelp.Text = "Show Help";
-			this.MenuShowHelp.Click += new System.EventHandler(this.OnClickShowHelp);
 			// 
 			// Window
 			// 

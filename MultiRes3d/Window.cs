@@ -45,7 +45,8 @@ namespace MultiRes3d {
 		void Update(double deltaTime) {
 			if (showHelp)
 				DrawHelpText();
-			DrawInfoText();
+			if(pm != null)
+				DrawInfoText();
 
 			viewport3d.PointLight.Position = viewport3d.Camera.Eye;
 
@@ -120,8 +121,9 @@ namespace MultiRes3d {
 				{ "↑", "Move Up Object" },
 				{ "↓", "Move Down Object" },
 				{ "R", "Reset Settings" },
-				{ "+", "Expand Mesh" },
-				{ "-", "Simplify Mesh" }
+				{ "+", "Increase Detail" },
+				{ "-", "Reduce Detail" },
+				{ "e", "Expand to max Detail" }
 			};
 			int xKey = 10,
 				xText = 40,
@@ -139,14 +141,17 @@ namespace MultiRes3d {
 		/// Rendert einige Informationen über die Mesh wie Vertex- u. Facettenanzahl.
 		/// </summary>
 		void DrawInfoText() {
+			var percent = (int)((pm.CurrentSplit / (float) pm.NumberOfSplits) * 100);
+			var progression = string.Format("{0}/{1} ({2} %)", pm.CurrentSplit,
+				pm.NumberOfSplits, percent);
 			viewport3d.DrawString("Number of Vertices", new Vector2(10, 257), Color.White);
-			viewport3d.DrawString("1804", new Vector2(160, 257), Color.Turquoise);
-
+			viewport3d.DrawString(pm.Vertices.Count.ToString(), new Vector2(160, 257),
+				Color.Turquoise);
 			viewport3d.DrawString("Number of Faces", new Vector2(10, 275), Color.White);
-			viewport3d.DrawString("4252", new Vector2(160, 275), Color.Turquoise);
-
+			viewport3d.DrawString(pm.Faces.Count.ToString(), new Vector2(160, 275),
+				Color.Turquoise);
 			viewport3d.DrawString("Level of Progression", new Vector2(10, 305), Color.White);
-			viewport3d.DrawString("127/1029 (14 %)", new Vector2(160, 305), Color.LawnGreen);
+			viewport3d.DrawString(progression, new Vector2(160, 305), Color.LawnGreen);
 		}
 
 		/// <summary>
@@ -176,7 +181,7 @@ namespace MultiRes3d {
 		/// </param>
 		void OnLoad(object sender, EventArgs e) {
 			
-			var testMesh = ObjIO.Load("Testdata/bunny.obj");
+			var testMesh = ObjIO.Load("Testdata/pm-cow.obj");
 
 			// 1. PM aus testMesh erstellen.
 			var test = new PM(viewport3d, testMesh);
@@ -242,6 +247,9 @@ namespace MultiRes3d {
 					break;
 				case Keys.R:
 					Reset();
+					break;
+				case Keys.Oemplus:
+					pm.IncreaseDetail();
 					break;
 			}
 		}

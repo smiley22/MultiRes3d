@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Forms;
 
 namespace MultiRes3d {
 	/// <summary>
@@ -62,6 +63,17 @@ namespace MultiRes3d {
 			}
 		}
 
+		IDictionary<int, ISet<Triangle>> _incidentFaces;
+
+		public void PerformVertexSplit() {
+			if (Splits.Count == 0)
+				return;
+			if (_incidentFaces == null)
+				_incidentFaces = ComputeIncidentFaces();
+			var split = Splits.Dequeue();
+			PerformVertexSplit(split, _incidentFaces);
+		}
+
 		/// <summary>
 		/// Berechnet für jeden Vertex die Menge seiner inzidenten Facetten.
 		/// </summary>
@@ -69,15 +81,15 @@ namespace MultiRes3d {
 		/// Eine Map die jedem Vertex der Mesh die Menge seiner inzidenten Facetten zuordnet.
 		/// </returns>
 		IDictionary<int, ISet<Triangle>> ComputeIncidentFaces() {
-			var incidentFaces = new Dictionary<int, ISet<Triangle>>();
+			var dict = new Dictionary<int, ISet<Triangle>>();
+			for (int i = 0; i < Vertices.Count; i++)
+				dict.Add(i, new HashSet<Triangle>());
 			foreach (var f in Faces) {
 				for (int c = 0; c < f.Indices.Length; c++) {
-					if (!incidentFaces.ContainsKey(f.Indices[c]))
-						incidentFaces[f.Indices[c]] = new HashSet<Triangle>();
-					incidentFaces[f.Indices[c]].Add(f);
+					dict[f.Indices[c]].Add(f);
 				}
 			}
-			return incidentFaces;
+			return dict;
 		}
 
 		/// <summary>

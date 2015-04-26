@@ -6,6 +6,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Linq;
 using Buffer = SlimDX.Direct3D11.Buffer;
+using MapFlags = SlimDX.Direct3D11.MapFlags;
 
 namespace MultiRes3d {
 	/// <summary>
@@ -17,6 +18,32 @@ namespace MultiRes3d {
 		InputLayout inputLayout;
 		VertexBufferBinding vertexBufferBinding;
 		Viewport3d viewport3d;
+		Mesh mesh;
+		int numberOfSplits;
+
+		public int NumberOfSplits {
+			get {
+				return numberOfSplits;
+			}
+		}
+
+		public int CurrentSplit {
+			get {
+				return numberOfSplits - mesh.Splits.Count;
+			}
+		}
+
+		public IList<Vertex> Vertices {
+			get {
+				return mesh.Vertices;
+			}
+		}
+
+		public IList<Triangle> Faces {
+			get {
+				return mesh.Faces;
+			}
+		}
 
 		/// <summary>
 		/// Initialisiert eine neue Instanz der PM Klasse.
@@ -28,19 +55,45 @@ namespace MultiRes3d {
 		/// Eine Mesh Instanz mit deren Daten die Progressiv Mesh initialisiert werden soll.
 		/// </param>
 		public PM(Viewport3d viewport3d, Mesh m) : base() {
+			mesh = m;
+			numberOfSplits = mesh.Splits.Count;
 			this.viewport3d = viewport3d;
 			// Platz im Vertexbuffer: Anzahl der Vertices der Grundmesh +
 			//						  Anzahl der SplitRecords.
-			vertexBuffer = CreateVertexBuffer(m.Vertices.Count, m.Vertices);
+			vertexBuffer = CreateVertexBuffer(m.Vertices.Count + m.Splits.Count, m.Vertices);
 			// Indexbuffer analog dazu.
-			indexBuffer = CreateIndexBuffer(m.Faces.Count * 3, m.Faces);
+			indexBuffer = CreateIndexBuffer((m.Splits.Count * 2 + m.Faces.Count) * 3, m.Faces);
 			inputLayout = CreateInputLayout();
 			vertexBufferBinding = new VertexBufferBinding(vertexBuffer, Vertex.Size, 0);
 
-			numIndices = m.Faces.Count * 3;
 		}
 
-		int numIndices;
+		public void IncreaseDetail() {
+			var ctx = viewport3d.Context;
+			mesh.PerformVertexSplit();
+
+			// Upload new data to vram.
+			DataBox db = ctx.MapSubresource(vertexBuffer, MapMode.WriteDiscard, MapFlags.None);
+			using (var s = db.Data) {
+				s.WriteRange<Vertex>(mesh.Vertices.ToArray());
+			}
+			ctx.UnmapSubresource(vertexBuffer, 0);
+
+			var indices = new uint[mesh.Faces.Count * 3];
+			for (int i = 0; i < mesh.Faces.Count; i++) {
+				for (int c = 0; c < 3; c++) {
+					indices[i * 3 + c] = Convert.ToUInt32(mesh.Faces[i].Indices[c]);
+				}
+			}
+			db = ctx.MapSubresource(indexBuffer, MapMode.WriteDiscard, MapFlags.None);
+			using (var s = db.Data) {
+				s.WriteRange<uint>(indices);
+			}
+			ctx.UnmapSubresource(indexBuffer, 0);
+
+
+		}
+
 		/// <summary>
 		/// Rendert die Instanz.
 		/// </summary>
@@ -59,7 +112,7 @@ namespace MultiRes3d {
 			for (int i = 0; i < tech.Description.PassCount; i++) {
 				tech.GetPassByIndex(i).Apply(context);
 
-				context.DrawIndexed(numIndices, 0, 0);
+				context.DrawIndexed(mesh.Faces.Count * 3, 0, 0);
 			}
 		}
 
@@ -131,8 +184,15 @@ namespace MultiRes3d {
 			var desc = new BufferDescription(Vertex.Size * maxVertices,
 				ResourceUsage.Dynamic, BindFlags.VertexBuffer, CpuAccessFlags.Write,
 				ResourceOptionFlags.None, 0);
-			return new Buffer(viewport3d.Device,
-				new DataStream(vertices.ToArray(), true, false), desc);
+			var buf = new Buffer(viewport3d.Device, desc);
+//				new DataStream(vertices.ToArray(), true, false), desc);
+			var dbox = viewport3d.Context.MapSubresource(buf, MapMode.WriteDiscard, MapFlags.None);
+			using (var s = dbox.Data) {
+				s.WriteRange<Vertex>(vertices.ToArray());
+			}
+			viewport3d.Context.UnmapSubresource(buf, 0);
+
+			return buf;
 		}
 
 		/// <summary>
@@ -150,14 +210,19 @@ namespace MultiRes3d {
 			var desc = new BufferDescription(sizeof(uint) * maxIndices,
 				ResourceUsage.Dynamic, BindFlags.IndexBuffer, CpuAccessFlags.Write,
 				ResourceOptionFlags.None, 0);
-//			return new Buffer(viewport3d.Device, desc);
-			var indices = new uint[maxIndices];
+			var buf = new Buffer(viewport3d.Device, desc);
+			var indices = new uint[faces.Count * 3];
 			for(int i = 0; i < faces.Count; i++) {
 				for(int c = 0; c < 3; c++) {
 					indices[i * 3 + c] = Convert.ToUInt32(faces[i].Indices[c]);
 				}
 			}
-			return new Buffer(viewport3d.Device, new DataStream(indices, false, false), desc);
+			var dbox = viewport3d.Context.MapSubresource(buf, MapMode.WriteDiscard, MapFlags.None);
+			using (var s = dbox.Data) {
+				s.WriteRange<uint>(indices);
+			}
+			viewport3d.Context.UnmapSubresource(buf, 0);
+			return buf;
 		}
 
 		/// <summary>
