@@ -1,6 +1,7 @@
 ﻿using SlimDX;
 using System.Collections.Generic;
 using System.Linq;
+using System.Windows.Forms;
 
 namespace MultiRes3d {
 	/// <summary>
@@ -60,10 +61,12 @@ namespace MultiRes3d {
 		/// <summary>
 		/// Die mit der Mesh assoziierten Vertex-Splits.
 		/// </summary>
-		public Queue<VertexSplit> Splits {
+		public Stack<VertexSplit> Splits {
 			get;
 			private set;
 		}
+
+		Stack<Contraction> contractions = new Stack<Contraction>();
 
 		/// <summary>
 		/// Initialisiert eine neue Instanz der Mesh Klasse.
@@ -75,21 +78,21 @@ namespace MultiRes3d {
 		/// Eine Liste von Facetten, die der Mesh hinzugefügt werden sollen.
 		/// </param>
 		/// <param name="splits">
-		/// Eine Queue von Vertex-Splits, die der Mesh hinzugefügt werden sollen.
+		/// Eine Liste von Vertex-Splits, die der Mesh hinzugefügt werden sollen.
 		/// </param>
-		public Mesh(IList<Vertex> vertices, IList<Triangle> faces, Queue<VertexSplit> splits) {
+		public Mesh(IList<Vertex> vertices, IList<Triangle> faces, IList<VertexSplit> splits) {
 			Vertices = new Vertex[vertices.Count + splits.Count];
 			NumberOfVertices = vertices.Count;
 			for (int i = 0; i < vertices.Count; i++)
 				Vertices[i] = vertices[i];
 			FlatFaces = new uint[(faces.Count + 2 * splits.Count) * 3];
 			NumberOfFaces = faces.Count;
-			Splits = new Queue<VertexSplit>();
+			Splits = new Stack<VertexSplit>();
 
 			for (int i = 0; i < faces.Count; i++)
 				_faces.Add(new Face(faces[i].Indices, FlatFaces, i * 3));
-			foreach (var s in splits)
-				Splits.Enqueue(s);
+			for (int i = splits.Count; i > 0; i--)
+				Splits.Push(splits[i - 1]);
 		}
 
 
@@ -98,13 +101,17 @@ namespace MultiRes3d {
 				return false;
 			if (incidentFaces == null)
 				incidentFaces = ComputeIncidentFaces();
-			var split = Splits.Dequeue();
+			var split = Splits.Pop();
 			PerformVertexSplit(split);
 			return true;
 		}
 
-		public bool PerformVertexSplits(int numSplits) {
-			return false;
+		public bool PerformContraction() {
+			if (contractions.Count == 0)
+				return false;
+			var contraction = contractions.Pop();
+			PerformContraction(contraction);
+			return true;
 		}
 
 		/// <summary>
@@ -132,13 +139,17 @@ namespace MultiRes3d {
 		/// Die Vertex-Split Operation, die ausgeführt werden soll.
 		/// </param>
 		void PerformVertexSplit(VertexSplit split) {
-			// 1. Vertex s wird an neue Position verschoben.
-			Vertices[split.S] = new Vertex() { Position = split.SPosition };
-			// 2. Vertex t wird neu zur Mesh hinzugefügt.
+			// 1. Vertex t wird neu zur Mesh hinzugefügt.
 			Vertices[NumberOfVertices] = new Vertex() { Position = split.TPosition };
 			uint t = (uint)NumberOfVertices;
+			// Umkehroperation des VertexSplits auf Contraction Stack pushen.
+			contractions.Push(new Contraction() {
+				S = split.S, Position = Vertices[split.S].Position,
+				faceOffset = NumberOfFaces,
+				VertexSplit = split
+			});
 			NumberOfVertices++;
-			// 3. Alle Facetten von s, die ursprünglich t "gehört" haben, auf t zurückbiegen.
+			// 2. Alle Facetten von s, die ursprünglich t "gehört" haben, auf t zurückbiegen.
 			var facesOfS = incidentFaces[split.S];
 			var facesOfT = new HashSet<Face>();
 			incidentFaces.Add(t, facesOfT);
@@ -160,20 +171,49 @@ namespace MultiRes3d {
 				var newFace = new Face(f.Indices, FlatFaces, NumberOfFaces * 3);
 				NumberOfFaces++;
 				for (int c = 0; c < 3; c++)
-					incidentFaces[newFace[c]].Add(newFace);
+						incidentFaces[newFace[c]].Add(newFace);
 			}
 			// Normalen von s und t neuberechnen. Eigentlich müssten auch die Normalen
 			// der restlichen Vertices der inzidenten Facetten neuberechnet werden, aber
 			// das hier reicht schon aus, damit es ganz gut aussieht.
-			var oldPos = Vertices[split.S].Position;
 			Vertices[split.S] = new Vertex() {
-				Position = oldPos,
+				Position = split.SPosition,
 				Normal = ComputeVertexNormal(split.S)
 			};
-			oldPos = Vertices[t].Position;
+			var oldPos = Vertices[t].Position;
 			Vertices[t] = new Vertex() {
 				Position = oldPos,
 				Normal = ComputeVertexNormal(t)
+			};
+		}
+
+		void PerformContraction(Contraction contraction) {
+			Vertices[contraction.S] = new Vertex() { Position = contraction.Position };
+			NumberOfFaces = contraction.faceOffset;
+			NumberOfVertices--;
+			uint t = (uint) NumberOfVertices;
+			foreach (var f in incidentFaces[t]) {
+				bool remove = false;
+				for (int i = 0; i < 3; i++) {
+					if (f[i] == contraction.S)
+						remove = true;
+					if (f[i] == t)
+						f[i] = contraction.S;
+				}
+				if (remove) {
+					for (int c = 0; c < 3; c++)
+						incidentFaces[f[c]].Remove(f);
+				} else {
+					incidentFaces[contraction.S].Add(f);
+				}
+			}
+			incidentFaces.Remove(t);
+			// Umkehroperation der Contraction auf den VertexSplit Stack pushen.
+			Splits.Push(contraction.VertexSplit);
+			// Normale des Vertex neuberechnen.
+			Vertices[contraction.S] = new Vertex() {
+				Position = contraction.Position,
+				Normal = ComputeVertexNormal(contraction.S)
 			};
 		}
 

@@ -105,15 +105,14 @@ namespace MultiRes3d {
 		/// </param>
 		public void ProgressTo(double percent) {
 			var delta = Math.Clamp(percent, 0, 1) - Progress;
-			if (delta > 0) {
-				// Progess
-				var numSplits = (int) NumberOfSplits * delta;
-				for (int i = 0; i < numSplits; i++) {
-					if (!mesh.PerformVertexSplit())
-						break;
-				}
-			} else {
-				// Regress
+			var numOps = (int) numberOfSplits * Math.Abs(delta);
+			if (numOps == 0)
+				return;
+			for (int i = 0; i < numOps; i++) {
+				var r = delta > 0 ? mesh.PerformVertexSplit() :
+					mesh.PerformContraction();
+				if (!r)
+					break;
 			}
 			CopyData();
 		}

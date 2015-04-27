@@ -33,7 +33,7 @@ namespace MultiRes3d {
 			var normals = new List<Vector3>();
 			var verts = new List<Vertex>();
 			var faces = new List<Triangle>();
-			var splits = new Queue<VertexSplit>();
+			var splits = new List<VertexSplit>();
 			using (var sr = File.OpenText(path)) {
 				string l = string.Empty;
 				while ((l = sr.ReadLine()) != null) {
@@ -45,7 +45,7 @@ namespace MultiRes3d {
 						ComputeNormals(face, verts);
 						faces.Add(face);
 					} else if (l.StartsWith("#vsplit ")) {
-						splits.Enqueue(ParseVertexSplit(l));
+						splits.Add(ParseVertexSplit(l));
 					}
 				}
 			}

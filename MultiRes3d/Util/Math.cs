@@ -207,6 +207,21 @@ namespace MultiRes3d {
 		}
 
 		/// <summary>
+		/// Returns the absolute value of a double-precision floating-point number.
+		/// </summary>
+		/// <param name="value">
+		/// A number that is greater than or equal to System.Double.MinValue, but less than or
+		/// equal to System.Double.MaxValue.
+		/// </param>
+		/// <returns>
+		/// A double-precision floating-point number, x, such that 0 ≤ x ≤
+		/// System.Double.MaxValue.
+		/// </returns>
+		public static double Abs(double value) {
+			return System.Math.Abs(value);
+		}
+
+		/// <summary>
 		/// Returns the smaller of two single-precision floating-point numbers.
 		/// </summary>
 		/// <param name="val1">
