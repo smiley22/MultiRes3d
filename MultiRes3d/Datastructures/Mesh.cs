@@ -59,14 +59,31 @@ namespace MultiRes3d {
 		}
 
 		/// <summary>
-		/// Die mit der Mesh assoziierten Vertex-Splits.
+		/// Der Stack von VertexSplits.
 		/// </summary>
+		/// <remarks>
+		/// Die Mesh verwaltet zwei zueinander komplementäre Stacks. Einen Stack
+		/// mit VertexSplit Einträgen und einen Stack mit den Umkehroperationen
+		/// (Contractions).
+		/// Jedes mal wenn von dem VertexSplit Stack ein VertexSplit entnommen
+		/// und auf der Mesh durchgeführt wird, wird ein neuer Eintrag auf dem
+		/// Contractions Stack angelegt, der die Umkehroperation zu dem VertexSplit
+		/// darstellt. Analog wird verfahren, wenn eine Contraction durchgeführt
+		/// wird. Auf diese Weise kann der Detailgrad der Mesh in beide Richtungen
+		/// variiert werden.
+		/// </remarks>
 		public Stack<VertexSplit> Splits {
 			get;
 			private set;
 		}
 
-		Stack<Contraction> contractions = new Stack<Contraction>();
+		/// <summary>
+		/// Der Stack von Contractions.
+		/// </summary>
+		public Stack<Contraction> Contractions {
+			get;
+			private set;
+		}
 
 		/// <summary>
 		/// Initialisiert eine neue Instanz der Mesh Klasse.
@@ -88,64 +105,37 @@ namespace MultiRes3d {
 			FlatFaces = new uint[(faces.Count + 2 * splits.Count) * 3];
 			NumberOfFaces = faces.Count;
 			Splits = new Stack<VertexSplit>();
-
+			Contractions = new Stack<Contraction>();
 			for (int i = 0; i < faces.Count; i++)
 				_faces.Add(new Face(faces[i].Indices, FlatFaces, i * 3));
 			for (int i = splits.Count; i > 0; i--)
 				Splits.Push(splits[i - 1]);
 		}
 
-
+		/// <summary>
+		/// Entfernt den obersten VertexSplit von dem VertexSplit Stack und führt ihn
+		/// durch.
+		/// </summary>
+		/// <returns>
+		/// true, wenn ein VertexSplit aus dem Stack entnommen wurde und durchgeführt
+		/// wurde; andernfalls false, d.h. der Stack war schon leer.
+		/// </returns>
+		/// <remarks>
+		/// Das Durchführen einer VertexSplit Operation hat immer das Pushen seiner
+		/// Umkehroperation auf den Contraction Stack zur Folge.
+		/// </remarks>
 		public bool PerformVertexSplit() {
 			if (Splits.Count == 0)
 				return false;
 			if (incidentFaces == null)
 				incidentFaces = ComputeIncidentFaces();
 			var split = Splits.Pop();
-			PerformVertexSplit(split);
-			return true;
-		}
-
-		public bool PerformContraction() {
-			if (contractions.Count == 0)
-				return false;
-			var contraction = contractions.Pop();
-			PerformContraction(contraction);
-			return true;
-		}
-
-		/// <summary>
-		/// Berechnet für jeden Vertex die Menge seiner inzidenten Facetten.
-		/// </summary>
-		/// <returns>
-		/// Eine Map die jedem Vertex der Mesh die Menge seiner inzidenten Facetten zuordnet.
-		/// </returns>
-		IDictionary<uint, ISet<Face>> ComputeIncidentFaces() {
-			var dict = new Dictionary<uint, ISet<Face>>();
-			for (uint i = 0; i < NumberOfVertices; i++)
-				dict.Add(i, new HashSet<Face>());
-			foreach (var f in _faces) {
-				for (int c = 0; c < 3; c++) {
-					dict[f[c]].Add(f);
-				}
-			}
-			return dict;
-		}
-
-		/// <summary>
-		/// Führt eine Vertex-Split Operation auf der Mesh aus.
-		/// </summary>
-		/// <param name="split">
-		/// Die Vertex-Split Operation, die ausgeführt werden soll.
-		/// </param>
-		void PerformVertexSplit(VertexSplit split) {
 			// 1. Vertex t wird neu zur Mesh hinzugefügt.
 			Vertices[NumberOfVertices] = new Vertex() { Position = split.TPosition };
-			uint t = (uint)NumberOfVertices;
+			uint t = (uint) NumberOfVertices;
 			// Umkehroperation des VertexSplits auf Contraction Stack pushen.
-			contractions.Push(new Contraction() {
-				S = split.S, Position = Vertices[split.S].Position,
-				faceOffset = NumberOfFaces,
+			Contractions.Push(new Contraction() { S = split.S,
+				Position = Vertices[split.S].Position, faceOffset = NumberOfFaces,
 				VertexSplit = split
 			});
 			NumberOfVertices++;
@@ -171,23 +161,53 @@ namespace MultiRes3d {
 				var newFace = new Face(f.Indices, FlatFaces, NumberOfFaces * 3);
 				NumberOfFaces++;
 				for (int c = 0; c < 3; c++)
-						incidentFaces[newFace[c]].Add(newFace);
+					incidentFaces[newFace[c]].Add(newFace);
 			}
 			// Normalen von s und t neuberechnen. Eigentlich müssten auch die Normalen
 			// der restlichen Vertices der inzidenten Facetten neuberechnet werden, aber
 			// das hier reicht schon aus, damit es ganz gut aussieht.
-			Vertices[split.S] = new Vertex() {
-				Position = split.SPosition,
+			Vertices[split.S] = new Vertex() { Position = split.SPosition,
 				Normal = ComputeVertexNormal(split.S)
 			};
 			var oldPos = Vertices[t].Position;
-			Vertices[t] = new Vertex() {
-				Position = oldPos,
+			Vertices[t] = new Vertex() { Position = oldPos,
 				Normal = ComputeVertexNormal(t)
 			};
+
+/*			var recomputed = new HashSet<uint>();
+			foreach (var f in incidentFaces[split.S].Union(incidentFaces[t])) {
+				for (int i = 0; i < 3; i++) {
+					var vi = f[i];
+					if (recomputed.Contains(vi))
+						continue;
+					recomputed.Add(vi);
+					oldPos = Vertices[vi].Position;
+					Vertices[vi] = new Vertex() {
+						Position = oldPos,
+						Normal = ComputeVertexNormal(vi)
+					};
+				}
+			}*/
+ 
+			return true;
 		}
 
-		void PerformContraction(Contraction contraction) {
+		/// <summary>
+		/// Entfernt die oberste Contraction von dem Contraction Stack und führt sie
+		/// durch.
+		/// </summary>
+		/// <returns>
+		/// true, wenn eine Contraction aus dem Stack entnommen wurde und durchgeführt
+		/// wurde; andernfalls false, d.h. der Stack war schon leer.
+		/// </returns>
+		/// <remarks>
+		/// Das Durchführen einer Contraction Operation hat immer das Pushen ihrer
+		/// Umkehroperation auf den VertexSplit Stack zur Folge.
+		/// </remarks>
+		public bool PerformContraction() {
+			if (Contractions.Count == 0)
+				return false;
+			var contraction = Contractions.Pop();
 			Vertices[contraction.S] = new Vertex() { Position = contraction.Position };
 			NumberOfFaces = contraction.faceOffset;
 			NumberOfVertices--;
@@ -215,6 +235,25 @@ namespace MultiRes3d {
 				Position = contraction.Position,
 				Normal = ComputeVertexNormal(contraction.S)
 			};
+			return true;
+		}
+
+		/// <summary>
+		/// Berechnet für jeden Vertex die Menge seiner inzidenten Facetten.
+		/// </summary>
+		/// <returns>
+		/// Eine Map die jedem Vertex der Mesh die Menge seiner inzidenten Facetten zuordnet.
+		/// </returns>
+		IDictionary<uint, ISet<Face>> ComputeIncidentFaces() {
+			var dict = new Dictionary<uint, ISet<Face>>();
+			for (uint i = 0; i < NumberOfVertices; i++)
+				dict.Add(i, new HashSet<Face>());
+			foreach (var f in _faces) {
+				for (int c = 0; c < 3; c++) {
+					dict[f[c]].Add(f);
+				}
+			}
+			return dict;
 		}
 
 		/// <summary>

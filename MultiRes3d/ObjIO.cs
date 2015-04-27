@@ -140,8 +140,7 @@ namespace MultiRes3d {
 			if (!m.Success)
 				throw new InvalidOperationException("Invalid vsplit: " + l);
 			var s = new VertexSplit() {
-				// FIXME: Fixup S index!!!!!
-				S = uint.Parse(m.Groups[1].Value),
+				S = uint.Parse(m.Groups[1].Value) - 1,
 				SPosition = ParseVector(m.Groups[2].Value),
 				TPosition = ParseVector(m.Groups[3].Value)
 			};
