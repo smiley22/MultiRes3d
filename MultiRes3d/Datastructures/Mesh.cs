@@ -103,6 +103,10 @@ namespace MultiRes3d {
 			return true;
 		}
 
+		public bool PerformVertexSplits(int numSplits) {
+			return false;
+		}
+
 		/// <summary>
 		/// Berechnet für jeden Vertex die Menge seiner inzidenten Facetten.
 		/// </summary>

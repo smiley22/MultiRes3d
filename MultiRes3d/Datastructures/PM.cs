@@ -29,7 +29,7 @@ namespace MultiRes3d {
 		}
 
 		/// <summary>
-		/// 
+		/// Der Index des zuletzt ausgeführten VertexSplits.
 		/// </summary>
 		public int CurrentSplit {
 			get {
@@ -37,13 +37,36 @@ namespace MultiRes3d {
 			}
 		}
 
+		/// <summary>
+		/// Gibt den prozentualen "Fortschritt" der Progressive Mesh an.
+		/// </summary>
+		public double Progress {
+			get {
+				return NumberOfSplits == 0 ? 1.0 :
+					(CurrentSplit / (double) NumberOfSplits);
+			}
+		}
+
+		/// <summary>
+		/// Die momentane Anzahl der Vertices der Progressive Mesh.
+		/// </summary>
+		/// <remarks>
+		/// Die Angabe dieses Felds erhöht und vermindert sich entsprechend, wenn
+		/// der Detailgrad erhöht bzw. reduziert wird.
+		/// </remarks>
 		public int NumberOfVertices {
 			get {
 				return mesh.NumberOfVertices;
 			}
 		}
 
-
+		/// <summary>
+		/// Die momentane Anzahl der Facetten der Progressive Mesh.
+		/// </summary>
+		/// <remarks>
+		/// Die Angabe dieses Felds erhöht und vermindert sich entsprechend, wenn
+		/// der Detailgrad erhöht bzw. reduziert wird.
+		/// </remarks>
 		public int NumberOfFaces {
 			get {
 				return mesh.NumberOfFaces;
@@ -57,7 +80,8 @@ namespace MultiRes3d {
 		/// Das D3D11 Viewport3d Control für welche die Instanz erzeugt wird.
 		/// </param>
 		/// <param name="m">
-		/// Eine Mesh Instanz mit deren Daten die Progressiv Mesh initialisiert werden soll.
+		/// Eine Mesh Instanz mit deren Daten die Progressiv Mesh initialisiert werden
+		/// soll.
 		/// </param>
 		public PM(Viewport3d viewport3d, Mesh m) : base() {
 			mesh = m;
@@ -72,28 +96,24 @@ namespace MultiRes3d {
 		}
 
 		/// <summary>
-		/// Kopiert die Vertices und Indices in den Videospeicher der Grafikkarte.
+		/// "Entwickelt" die Progressive Mesh auf den angegebenen Prozentwert.
 		/// </summary>
-		void CopyData() {
-			// Vertexbuffer in Addressraum mappen.
-			var context = viewport3d.Context;
-			DataBox db = context.MapSubresource(vertexBuffer, MapMode.WriteDiscard, MapFlags.None);
-			using (var ds = db.Data) {
-				ds.WriteRange<Vertex>(mesh.Vertices, 0, mesh.NumberOfVertices);
-			}
-			context.UnmapSubresource(vertexBuffer, 0);
-			// Indexbuffer in Addressraum mappen.
-			db = context.MapSubresource(indexBuffer, MapMode.WriteDiscard, MapFlags.None);
-			using (var s = db.Data) {
-				s.WriteRange<uint>(mesh.FlatFaces, 0, mesh.NumberOfFaces * 3);
-			}
-			context.UnmapSubresource(indexBuffer, 0);
-		}
-
-		public void IncreaseDetail(bool maxDetail = false) {
-			mesh.PerformVertexSplit();
-			if (maxDetail) {
-				while (mesh.PerformVertexSplit()) ;
+		/// <param name="percent">
+		/// Der Prozentwert auf den die Progressive Mesh entwickelt werden soll,
+		/// wobei 0.0 der Grundmesh entspricht und 1.0 der Mesh mit maximalem
+		/// Detailgrad.
+		/// </param>
+		public void ProgressTo(double percent) {
+			var delta = Math.Clamp(percent, 0, 1) - Progress;
+			if (delta > 0) {
+				// Progess
+				var numSplits = (int) NumberOfSplits * delta;
+				for (int i = 0; i < numSplits; i++) {
+					if (!mesh.PerformVertexSplit())
+						break;
+				}
+			} else {
+				// Regress
 			}
 			CopyData();
 		}
@@ -151,6 +171,27 @@ namespace MultiRes3d {
 		}
 
 		/// <summary>
+		/// Kopiert die Vertices und Indices in den Videospeicher der Grafikkarte.
+		/// </summary>
+		void CopyData() {
+			// Vertexbuffer in Addressraum mappen.
+			var context = viewport3d.Context;
+			DataBox db = context.MapSubresource(vertexBuffer, MapMode.WriteDiscard,
+				MapFlags.None);
+			using (var ds = db.Data) {
+				ds.WriteRange<Vertex>(mesh.Vertices, 0, mesh.NumberOfVertices);
+			}
+			context.UnmapSubresource(vertexBuffer, 0);
+			// Indexbuffer in Addressraum mappen.
+			db = context.MapSubresource(indexBuffer, MapMode.WriteDiscard,
+				MapFlags.None);
+			using (var s = db.Data) {
+				s.WriteRange<uint>(mesh.FlatFaces, 0, mesh.NumberOfFaces * 3);
+			}
+			context.UnmapSubresource(indexBuffer, 0);
+		}
+
+		/// <summary>
 		/// Konfiguriert den InputAssembler des D3D11 Contexts, d.h. "verdrahtet"
 		/// die Vertex- u. Indexbuffer der PM so daß sie als Eingabe für die
 		/// Shader dienen.
@@ -165,7 +206,7 @@ namespace MultiRes3d {
 			context.InputAssembler.PrimitiveTopology = PrimitiveTopology.TriangleList;
 			context.InputAssembler.InputLayout = inputLayout;
 			context.InputAssembler.SetVertexBuffers(0, vertexBufferBinding);
-				context.InputAssembler.SetIndexBuffer(indexBuffer, Format.R32_UInt, 0);
+			context.InputAssembler.SetIndexBuffer(indexBuffer, Format.R32_UInt, 0);
 			// Grundfarbe, die als Eingabewert bei der Lichtberechnung benutzt wird.
 			effect.SetColor(Color.Gray);
 		}

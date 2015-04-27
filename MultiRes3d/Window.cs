@@ -47,9 +47,8 @@ namespace MultiRes3d {
 				DrawHelpText();
 			if(pm != null)
 				DrawInfoText();
-
+			// Pointlight bewegt sich mit uns mit.
 			viewport3d.PointLight.Position = viewport3d.Camera.Eye;
-
 		}
 
 		/// <summary>
@@ -223,8 +222,9 @@ namespace MultiRes3d {
 		/// Die Event Parameter.
 		/// </param>
 		void OnKeyDown(object sender, KeyEventArgs e) {
-			float moveStep = .1f;
-			float scaleStep = .01f;
+			var moveStep = .1f;
+			var scaleStep = .01f;
+			var increaseStep = .01;
 			if (pm == null)
 				return;
 			switch (e.KeyCode) {
@@ -250,12 +250,13 @@ namespace MultiRes3d {
 					Reset();
 					break;
 				case Keys.Oemplus:
-					pm.IncreaseDetail();
+					pm.ProgressTo(pm.Progress + increaseStep);
 					break;
 				case Keys.OemMinus:
+					pm.ProgressTo(pm.Progress - increaseStep);
 					break;
 				case Keys.E:
-					pm.IncreaseDetail(true);
+					pm.ProgressTo(1.0);
 					break;
 			}
 		}

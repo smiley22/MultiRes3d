@@ -97,6 +97,27 @@ namespace MultiRes3d {
 		}
 
 		/// <summary>
+		/// Clamps a number between a minimum and a maximum.
+		/// </summary>
+		/// <param name="n">
+		/// The number to clamp.
+		/// </param>
+		/// <param name="min">
+		/// The minimum allowed value.
+		/// </param>
+		/// <param name="max">
+		/// The maximum allowed value.
+		/// </param>
+		/// <returns>
+		/// min, if n is lower than min; max, if n is higher than max; n otherwise.
+		/// </returns>
+		public static double Clamp(double n, double min, double max) {
+			n = ((n > max) ? max : n);
+			n = ((n < min) ? min : n);
+			return n;
+		}
+
+		/// <summary>
 		/// Returns a value indicating whether this instance and a specified System.Single object
 		/// represent the same value.
 		/// </summary>
