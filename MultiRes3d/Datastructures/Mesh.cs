@@ -1,7 +1,6 @@
 ﻿using SlimDX;
 using System.Collections.Generic;
 using System.Linq;
-using System.Windows.Forms;
 
 namespace MultiRes3d {
 	/// <summary>
@@ -102,7 +101,18 @@ namespace MultiRes3d {
 			NumberOfVertices = vertices.Count;
 			for (int i = 0; i < vertices.Count; i++)
 				Vertices[i] = vertices[i];
-			FlatFaces = new uint[(faces.Count + 2 * splits.Count) * 3];
+#if false
+			// FIXME: Geht davon aus, daß pro VertexSplit höchstens 2 neue Facetten
+			//        entstehen. Dies trifft auf "normale" Meshes auch zu, aber
+			//        bei manchen nicht-wohlgeformten Meshes geht diese Rechnung
+ 			//        nicht auf.
+			int maxNewFacesPerSplit = 2;
+#else
+			// Provisorische Notlösung: Zur Sicherheit mehr Speicher allokieren als
+			// notwendig sein sollte.
+			int maxNewFacesPerSplit = 3;
+#endif
+			FlatFaces = new uint[(faces.Count + maxNewFacesPerSplit * splits.Count) * 3];
 			NumberOfFaces = faces.Count;
 			Splits = new Stack<VertexSplit>();
 			Contractions = new Stack<Contraction>();
@@ -127,19 +137,24 @@ namespace MultiRes3d {
 		public bool PerformVertexSplit() {
 			if (Splits.Count == 0)
 				return false;
-			if (incidentFaces == null)
+			if (incidentFaces == null) {
 				incidentFaces = ComputeIncidentFaces();
+				// Einmalig alle Vertexnormalen bestimmen.
+//				ComputeNormals(_faces);
+			}
 			var split = Splits.Pop();
-			// 1. Vertex t wird neu zur Mesh hinzugefügt.
+			// 1. Vertex s wird an neue Position verschoben.
+			Vertices[split.S] = new Vertex() { Position = split.SPosition };
+			// 2. Vertex t wird neu zur Mesh hinzugefügt.
 			Vertices[NumberOfVertices] = new Vertex() { Position = split.TPosition };
 			uint t = (uint) NumberOfVertices;
-			// Umkehroperation des VertexSplits auf Contraction Stack pushen.
+			// 3. Umkehroperation des VertexSplits auf Contraction Stack pushen.
 			Contractions.Push(new Contraction() { S = split.S,
 				Position = Vertices[split.S].Position, faceOffset = NumberOfFaces,
 				VertexSplit = split
 			});
 			NumberOfVertices++;
-			// 2. Alle Facetten von s, die ursprünglich t "gehört" haben, auf t zurückbiegen.
+			// 4. Alle Facetten von s, die ursprünglich t "gehört" haben, auf t zurückbiegen.
 			var facesOfS = incidentFaces[split.S];
 			var facesOfT = new HashSet<Face>();
 			incidentFaces.Add(t, facesOfT);
@@ -154,7 +169,7 @@ namespace MultiRes3d {
 			}
 			foreach (var r in removeFromS)
 				facesOfS.Remove(r);
-			// 4. Etwaige gemeinsame Facetten von s und t der Mesh neu hinzufügen.
+			// 5. Etwaige gemeinsame Facetten von s und t der Mesh neu hinzufügen.
 			foreach (var f in split.Faces) {
 				if (!f.Indices.Contains(split.S))
 					continue;
@@ -163,32 +178,8 @@ namespace MultiRes3d {
 				for (int c = 0; c < 3; c++)
 					incidentFaces[newFace[c]].Add(newFace);
 			}
-			// Normalen von s und t neuberechnen. Eigentlich müssten auch die Normalen
-			// der restlichen Vertices der inzidenten Facetten neuberechnet werden, aber
-			// das hier reicht schon aus, damit es ganz gut aussieht.
-			Vertices[split.S] = new Vertex() { Position = split.SPosition,
-				Normal = ComputeVertexNormal(split.S)
-			};
-			var oldPos = Vertices[t].Position;
-			Vertices[t] = new Vertex() { Position = oldPos,
-				Normal = ComputeVertexNormal(t)
-			};
-
-/*			var recomputed = new HashSet<uint>();
-			foreach (var f in incidentFaces[split.S].Union(incidentFaces[t])) {
-				for (int i = 0; i < 3; i++) {
-					var vi = f[i];
-					if (recomputed.Contains(vi))
-						continue;
-					recomputed.Add(vi);
-					oldPos = Vertices[vi].Position;
-					Vertices[vi] = new Vertex() {
-						Position = oldPos,
-						Normal = ComputeVertexNormal(vi)
-					};
-				}
-			}*/
- 
+			// Normalen aller betroffenen Vertices neuberechnen.
+			ComputeNormals(incidentFaces[split.S].Union(incidentFaces[t]));
 			return true;
 		}
 
@@ -208,16 +199,18 @@ namespace MultiRes3d {
 			if (Contractions.Count == 0)
 				return false;
 			var contraction = Contractions.Pop();
+			// 1. Vertex s wird an neue Position verschoben.
 			Vertices[contraction.S] = new Vertex() { Position = contraction.Position };
 			NumberOfFaces = contraction.faceOffset;
 			NumberOfVertices--;
 			uint t = (uint) NumberOfVertices;
+			// 2. Alle Facetten von t auf s umbiegen.
 			foreach (var f in incidentFaces[t]) {
 				bool remove = false;
 				for (int i = 0; i < 3; i++) {
 					if (f[i] == contraction.S)
 						remove = true;
-					if (f[i] == t)
+					else if (f[i] == t)
 						f[i] = contraction.S;
 				}
 				if (remove) {
@@ -228,13 +221,10 @@ namespace MultiRes3d {
 				}
 			}
 			incidentFaces.Remove(t);
-			// Umkehroperation der Contraction auf den VertexSplit Stack pushen.
+			// 3. Umkehroperation der Contraction auf den VertexSplit Stack pushen.
 			Splits.Push(contraction.VertexSplit);
-			// Normale des Vertex neuberechnen.
-			Vertices[contraction.S] = new Vertex() {
-				Position = contraction.Position,
-				Normal = ComputeVertexNormal(contraction.S)
-			};
+			// Normalen aller betroffenen Vertices neuberechnen.
+			ComputeNormals(incidentFaces[contraction.S]);
 			return true;
 		}
 
@@ -295,19 +285,41 @@ namespace MultiRes3d {
 		}
 
 		/// <summary>
+		/// Berechnet die Normalen der angegebenen Facetten und all ihrer inzidenten
+		/// Vertices.
+		/// </summary>
+		/// <param name="faces">
+		/// Die Facetten.
+		/// </param>
+		void ComputeNormals(IEnumerable<Face> faces) {
+			var recompute = new HashSet<uint>();
+			// Facettennormalen berechnen und dabei Vertex Indices einsammeln.
+			foreach (var f in faces) {
+				ComputeFaceNormal(f);
+				for (int i = 0; i < 3; i++)
+					recompute.Add(f[i]);
+			}
+			// Für jeden eingesammelten Vertex Normale berechnen.
+			foreach (var index in recompute)
+				ComputeVertexNormal(index);
+		}
+
+		/// <summary>
 		/// Berechnet den Normalenvektor des angegebenen Vertex.
 		/// </summary>
 		/// <param name="v">
 		/// Der Vertex.
 		/// </param>
-		/// <returns>
-		/// Der Normalenvektor des Vertex.
-		/// </returns>
-		Vector3 ComputeVertexNormal(uint v) {
+		void ComputeVertexNormal(uint v) {
 			var normal = Vector3.Zero;
 			foreach (var face in incidentFaces[v])
-				normal = normal + ComputeFaceNormal(face);
-			return normal.Normalized();
+				normal = normal + face.Normal;
+			normal.Normalize();
+			var oldPos = Vertices[v].Position;
+			Vertices[v] = new Vertex() {
+				Position = oldPos,
+				Normal = normal
+			};
 		}
 
 		/// <summary>
@@ -316,13 +328,11 @@ namespace MultiRes3d {
 		/// <param name="f">
 		/// Die Facette.
 		/// </param>
-		/// <returns>
-		/// Der Normalenvektor der Facette.
-		/// </returns>
-		Vector3 ComputeFaceNormal(Face f) {
+		void ComputeFaceNormal(Face f) {
 			var d1 = Vertices[f[1]].Position - Vertices[f[0]].Position;
 			var d2 = Vertices[f[2]].Position - Vertices[f[0]].Position;
-			return Vector3.Cross(d1, d2).Normalized();
+			f.Normal = Vector3.Cross(d1, d2);
+			f.Normal.Normalize();
 		}
 	}
 }
