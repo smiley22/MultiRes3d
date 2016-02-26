@@ -1,0 +1,806 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>SpriteTextRenderer</name>
+    </assembly>
+    <members>
+        <member name="T:SpriteTextRenderer.CharRenderCall">
+            <summary>
+            Represents an abstract command to draw a char
+            </summary>
+        </member>
+        <member name="P:SpriteTextRenderer.CharRenderCall.Position">
+            <summary>
+            The position of the char
+            </summary>
+        </member>
+        <member name="P:SpriteTextRenderer.CharRenderCall.TextLayout">
+            <summary>
+            The library-specific text layout of the char
+            </summary>
+        </member>
+        <member name="T:SpriteTextRenderer.Degrees">
+            <summary>
+            This structure can be used in place of doubles that represent angles in radians. The conversion is performed implicitly.
+            </summary>
+        </member>
+        <member name="M:SpriteTextRenderer.Degrees.#ctor(System.Double)">
+            <summary>
+            Constructs a new Degrees object.
+            </summary>
+            <param name="degrees">The angle to initialize this object with in degrees</param>
+        </member>
+        <member name="M:SpriteTextRenderer.Degrees.op_Implicit(SpriteTextRenderer.Degrees)~System.Double">
+            <summary>
+            Converts a Degrees object to a double value that represents the same angle in radians.
+            </summary>
+            <param name="d">A Degrees object</param>
+            <returns>A double value that represents the same angle in radians</returns>
+        </member>
+        <member name="P:SpriteTextRenderer.Degrees.Value">
+            <summary>
+            Gets or sets the angle of this object in degrees.
+            </summary>
+        </member>
+        <member name="T:SpriteTextRenderer.Radians">
+            <summary>
+            This structure can be used in place of double that represent angles in radians. It does not perform any conversion, but 
+            it is introduced as the dual to the Degrees struct.
+            </summary>
+        </member>
+        <member name="M:SpriteTextRenderer.Radians.#ctor(System.Double)">
+            <summary>
+            Constructs a new Radians object.
+            </summary>
+            <param name="rad">The angle to initialize this object with in radians</param>
+        </member>
+        <member name="M:SpriteTextRenderer.Radians.op_Implicit(SpriteTextRenderer.Radians)~System.Double">
+            <summary>
+            Converts a Radians object to a double value that represents the same angle in radians.
+            </summary>
+            <param name="d">A Radians object</param>
+            <returns>A double value that represents the same angle in radians</returns>
+        </member>
+        <member name="P:SpriteTextRenderer.Radians.Value">
+            <summary>
+            Gets or sets the angle of this object in radians.
+            </summary>
+        </member>
+        <member name="T:SpriteTextRenderer.Properties.Resources">
+            <summary>
+              Eine stark typisierte Ressourcenklasse zum Suchen von lokalisierten Zeichenfolgen usw.
+            </summary>
+        </member>
+        <member name="P:SpriteTextRenderer.Properties.Resources.ResourceManager">
+            <summary>
+              Gibt die zwischengespeicherte ResourceManager-Instanz zurück, die von dieser Klasse verwendet wird.
+            </summary>
+        </member>
+        <member name="P:SpriteTextRenderer.Properties.Resources.Culture">
+            <summary>
+              Überschreibt die CurrentUICulture-Eigenschaft des aktuellen Threads für alle
+              Ressourcenzuordnungen, die diese stark typisierte Ressourcenklasse verwenden.
+            </summary>
+        </member>
+        <member name="P:SpriteTextRenderer.Properties.Resources.SpriteShader">
+             <summary>
+               Sucht eine lokalisierte Zeichenfolge, die Texture2D Tex;
+            SamplerState sam
+            {
+            	Filter = MIN_MAG_MIP_LINEAR;
+            	AddressU  = Wrap;
+            	AddressV  = Wrap;
+            };
+            							
+            struct VS_IN
+            {
+            	float2 TexCoord		: TEXCOORD;
+            	float4 Color		: COLOR;
+            	float2 Position		: POSITION;
+            	float2 TexCoordSize	: TEXCOORDSIZE;
+            	float2 Size			: SIZE;
+            };
+            
+            struct GS_OUT
+            {
+            	float2 TexCoord : TEXCOORD;
+            	float4 Color	: COLOR;
+            	float4 Position : SV_POSITION;
+            };
+            
+            struct PS_IN
+            {
+            	float2 TexCoord : TEXCOORD;
+            	float4 Color	: COLOR;
+            };
+            
+            DepthStencilState DisableDepth
+             [Rest der Zeichenfolge wurde abgeschnitten]&quot;; ähnelt.
+             </summary>
+        </member>
+        <member name="T:SpriteTextRenderer.CoordinateType">
+            <summary>
+            Specifies, how coordinates are interpreted.
+            </summary>
+            <remarks>
+            <para>Sprites (and with that text) can be drawn in several coordinate systems. The user can choose, which system
+            fits his needs best. There are basically two types of coordinate system:</para>
+            <para><b>Type 1 systems</b><br/>
+            <img src="../Coordinate1.jpg" alt="Type 1 coordinate system"/><br/>
+            The origin of T1 systems is located at the top left corner of the screen. The x-axis points to the right,
+            the y-axis points downwards. All T1 systems differ in the axes' scaling. <see cref="F:SpriteTextRenderer.CoordinateType.UNorm"/>
+            uses unsigned normalized coordinates. <see cref="F:SpriteTextRenderer.CoordinateType.Absolute"/> uses the screen's pixel coordinates.
+            Therefore, the SpriteRenderer needs the D3DDevice's viewport. For performance reasons the viewport will not be
+            queried repeatedly, but only once at the construction of the <see cref="T:SpriteTextRenderer.SpriteRenderer"/> or on a call to 
+            <see cref="M:SpriteTextRenderer.SpriteRenderer.RefreshViewport"/>. <see cref="F:SpriteTextRenderer.CoordinateType.Relative"/> uses a T1 coordinate 
+            system of custom size.
+            </para>
+            <para><b>Type 2 systems</b><br/>
+            <img src="../Coordinate2.jpg" alt="Type 2 coordinate system"/><br/>
+            The origin of T2 systems is at the screen center. The x-axis points to the right, the y-axis points upwards.
+            I.e. this coordinate system uses a flipped y-axis. Although the bottom coordinates usually have values less than
+            the top coordinates, you can safely specify positive size values. <see cref="F:SpriteTextRenderer.CoordinateType.SNorm"/> uses a T2 system.
+            </para>
+            
+            </remarks>
+        </member>
+        <member name="F:SpriteTextRenderer.CoordinateType.UNorm">
+            <summary>
+            Coordinates are in the range from 0 to 1. (0, 0) is the top left corner; (1, 1) is the bottom right corner.
+            </summary>
+        </member>
+        <member name="F:SpriteTextRenderer.CoordinateType.SNorm">
+            <summary>
+            Coordinates are in the range from -1 to 1. (-1, -1) is the bottom left corner; (1, 1) is the top right corner. This is the DirectX standard interpretation.
+            </summary>
+        </member>
+        <member name="F:SpriteTextRenderer.CoordinateType.Relative">
+            <summary>
+            Coordinates are in the range of the relative screen size. (0, 0) is the top left corner; (ScreenSize.X, ScreenSize.Y) is the bottom right corner. A variable screen size is used. Use <see cref="P:SpriteTextRenderer.SpriteRenderer.ScreenSize"/>.
+            </summary>
+        </member>
+        <member name="F:SpriteTextRenderer.CoordinateType.Absolute">
+            <summary>
+            Coordinates are in the range of the actual screen size. (0, 0) is the top left corner; (Viewport.Width, Viewport.Height) is the bottom right corner. Use <see cref="M:SpriteTextRenderer.SpriteRenderer.RefreshViewport"/> for updates to the used viewport.
+            </summary>
+        </member>
+        <member name="T:SpriteTextRenderer.AlphaBlendModeType">
+            <summary>
+            Specify the alpha blending mode of the texture being drawn 
+            </summary>
+        </member>
+        <member name="F:SpriteTextRenderer.AlphaBlendModeType.PostMultiplied">
+            <summary>
+            Alpha blending is postmultiplied (straight)
+            </summary>
+        </member>
+        <member name="F:SpriteTextRenderer.AlphaBlendModeType.PreMultiplied">
+            <summary>
+            The sprite renderer assumes alpha channel is premultiplied
+            </summary>
+        </member>
+        <member name="T:SpriteTextRenderer.SpriteRenderer">
+            <summary>
+            This class is responsible for rendering 2D sprites. Typically, only one instance of this class is necessary.
+            </summary>
+        </member>
+        <member name="F:SpriteTextRenderer.SpriteRenderer.blendState">
+            <summary>
+            The blend state to use for rendering sprites
+            </summary>
+        </member>
+        <member name="F:SpriteTextRenderer.SpriteRenderer.depthStencilState">
+            <summary>
+            The depth stencil state to use for rendering sprites
+            </summary>
+        </member>
+        <member name="M:SpriteTextRenderer.SpriteRenderer.UpdateAlphaBlend">
+            <summary>
+            Called every time Alpha blending mode has changed.
+            </summary>
+        </member>
+        <member name="F:SpriteTextRenderer.SpriteRenderer.sprites">
+            <summary>
+            A list of all sprites to draw. Sprites are drawn in the order in this list.
+            </summary>
+        </member>
+        <member name="F:SpriteTextRenderer.SpriteRenderer.textureSprites">
+            <summary>
+            Allows direct access to the according SpriteSegments based on the texture
+            </summary>
+        </member>
+        <member name="F:SpriteTextRenderer.SpriteRenderer.spriteCount">
+            <summary>
+            The number of currently buffered sprites
+            </summary>
+        </member>
+        <member name="F:SpriteTextRenderer.SpriteRenderer.alphaBlendMode">
+            <summary>
+            The active Alpha blending mode
+            </summary>
+        </member>
+        <member name="M:SpriteTextRenderer.SpriteRenderer.#ctor(System.Int32)">
+            <summary>
+            Create a new SpriteRenderer instance.
+            </summary>
+            <param name="bufferSize">The number of elements that can be stored in the sprite buffer.</param>
+            <remarks>
+            Sprites are not drawn immediately, but buffered instead. The buffer size defines, how much sprites can be buffered.
+            If the buffer is full, according draw calls will be issued on the GPU clearing the buffer. Its size should be as big as
+            possible without wasting empty space.
+            </remarks>
+        </member>
+        <member name="M:SpriteTextRenderer.SpriteRenderer.CompileEffectAndGetVariable(System.String,System.String)">
+            <summary>
+            Compiles the effect and saves it as the renderer's FX. Furthermore, one effect resource variable is saved.
+            </summary>
+            <param name="hlslSource">The source code to compile</param>
+            <param name="variableName">The variable's name</param>
+        </member>
+        <member name="M:SpriteTextRenderer.SpriteRenderer.CreateInputLayout(SpriteTextRenderer.STRInputElement[])">
+            <summary>
+            Creates a new input layout and saves it as the renderer's layout.
+            </summary>
+            <param name="elements">The input elements</param>
+        </member>
+        <member name="M:SpriteTextRenderer.SpriteRenderer.CreateDepthStencilAndBlendState">
+            <summary>
+            Creates a depth stencil state with IsDepthEnabled=false and DepthWriteMask=ZERO and a blend state with alpha blending.
+            </summary>
+        </member>
+        <member name="M:SpriteTextRenderer.SpriteRenderer.CreateVertexBuffer(System.Int32,System.Int32)">
+            <summary>
+            Creates a new vertex buffer and saves it as the renderer's buffer.
+            </summary>
+            <param name="elementByteSize">The byte size of one vertex</param>
+            <param name="elements">The number of elements to hold in this buffer</param>
+        </member>
+        <member name="M:SpriteTextRenderer.SpriteRenderer.Initialize">
+            <summary>
+            Initializes the sprite renderer so it is set up for use.
+            </summary>
+        </member>
+        <member name="M:SpriteTextRenderer.SpriteRenderer.QueryViewport">
+            <summary>
+            Queries the current viewport from the device.
+            </summary>
+            <returns>The current viewport</returns>
+        </member>
+        <member name="M:SpriteTextRenderer.SpriteRenderer.RefreshViewport">
+            <summary>
+            Updates the viewport used for absolute positioning. The first current viewport of the device's rasterizer will be used.
+            </summary>
+        </member>
+        <member name="M:SpriteTextRenderer.SpriteRenderer.ClearReorderBuffer">
+            <summary>
+            Closes a reorder session. Further draw calls will not be drawn together with previous draw calls.
+            </summary>
+        </member>
+        <member name="M:SpriteTextRenderer.SpriteRenderer.Draw(System.Object,SpriteTextRenderer.STRVector,SpriteTextRenderer.STRVector,SpriteTextRenderer.CoordinateType)">
+            <summary>
+            Draws a complete texture on the screen.
+            </summary>
+            <param name="texture">The shader resource view of the texture to draw</param>
+            <param name="position">Position of the top left corner of the texture in the chosen coordinate system</param>
+            <param name="size">Size of the texture in the chosen coordinate system. The size is specified in the screen's coordinate system.</param>
+            <param name="coordinateType">A custom coordinate system in which to draw the texture</param>
+        </member>
+        <member name="M:SpriteTextRenderer.SpriteRenderer.Draw(System.Object,SpriteTextRenderer.STRVector,SpriteTextRenderer.STRVector,SpriteTextRenderer.STRVector,System.Double,SpriteTextRenderer.CoordinateType)">
+            <summary>
+            Draws a complete texture on the screen.
+            </summary>
+            <param name="texture">The shader resource view of the texture to draw</param>
+            <param name="position">Position of the top left corner of the texture in the chosen coordinate system</param>
+            <param name="size">Size of the texture in the chosen coordinate system. The size is specified in the screen's coordinate system.</param>
+            <param name="center">Specify the texture's center in the chosen coordinate system. The center is specified in the texture's local coordinate system. E.g. for <paramref name="coordinateType"/>=CoordinateType.SNorm, the texture's center is defined by (0, 0).</param>
+            <param name="rotationAngle">The angle in radians to rotate the texture. Positive values mean counter-clockwise rotation. Rotations can only be applied for relative or absolute coordinates. Consider using the Degrees or Radians helper structs.</param>
+            <param name="coordinateType">A custom coordinate system in which to draw the texture</param>
+        </member>
+        <member name="M:SpriteTextRenderer.SpriteRenderer.Draw(System.Object,SpriteTextRenderer.STRVector,SpriteTextRenderer.STRVector,SpriteTextRenderer.STRColor,SpriteTextRenderer.CoordinateType)">
+            <summary>
+            Draws a complete texture on the screen.
+            </summary>
+            <param name="texture">The shader resource view of the texture to draw</param>
+            <param name="position">Position of the top left corner of the texture in the chosen coordinate system</param>
+            <param name="size">Size of the texture in the chosen coordinate system. The size is specified in the screen's coordinate system.</param>
+            <param name="coordinateType">A custom coordinate system in which to draw the texture</param>
+            <param name="color">The color with which to multiply the texture</param>
+        </member>
+        <member name="M:SpriteTextRenderer.SpriteRenderer.Draw(System.Object,SpriteTextRenderer.STRVector,SpriteTextRenderer.STRVector,SpriteTextRenderer.STRVector,System.Double,SpriteTextRenderer.STRColor,SpriteTextRenderer.CoordinateType)">
+            <summary>
+            Draws a complete texture on the screen.
+            </summary>
+            <param name="texture">The shader resource view of the texture to draw</param>
+            <param name="position">Position of the top left corner of the texture in the chosen coordinate system</param>
+            <param name="size">Size of the texture in the chosen coordinate system. The size is specified in the screen's coordinate system.</param>
+            <param name="center">Specify the texture's center in the chosen coordinate system. The center is specified in the texture's local coordinate system. E.g. for <paramref name="coordinateType"/>=CoordinateType.SNorm, the texture's center is defined by (0, 0).</param>
+            <param name="rotationAngle">The angle in radians to rotate the texture. Positive values mean counter-clockwise rotation. Rotations can only be applied for relative or absolute coordinates. Consider using the Degrees or Radians helper structs.</param>
+            <param name="coordinateType">A custom coordinate system in which to draw the texture</param>
+            <param name="color">The color with which to multiply the texture</param>
+        </member>
+        <member name="M:SpriteTextRenderer.SpriteRenderer.Draw(System.Object,SpriteTextRenderer.STRVector,SpriteTextRenderer.STRVector,SpriteTextRenderer.STRVector,System.Double,SpriteTextRenderer.STRVector,SpriteTextRenderer.STRVector,SpriteTextRenderer.STRColor,SpriteTextRenderer.CoordinateType)">
+            <summary>
+            Draws a region of a texture on the screen.
+            </summary>
+            <param name="texture">The shader resource view of the texture to draw</param>
+            <param name="position">Position of the center of the texture in the chosen coordinate system</param>
+            <param name="size">Size of the texture in the chosen coordinate system. The size is specified in the screen's coordinate system.</param>
+            <param name="center">Specify the texture's center in the chosen coordinate system. The center is specified in the texture's local coordinate system. E.g. for <paramref name="coordinateType"/>=CoordinateType.SNorm, the texture's center is defined by (0, 0).</param>
+            <param name="rotationAngle">The angle in radians to rotate the texture. Positive values mean counter-clockwise rotation. Rotations can only be applied for relative or absolute coordinates. Consider using the Degrees or Radians helper structs.</param>
+            <param name="coordinateType">A custom coordinate system in which to draw the texture</param>
+            <param name="color">The color with which to multiply the texture</param>
+            <param name="texCoords">Texture coordinates for the top left corner</param>
+            <param name="texCoordsSize">Size of the region in texture coordinates</param>
+        </member>
+        <member name="M:SpriteTextRenderer.SpriteRenderer.CheckForFullBuffer">
+            <summary>
+            If the buffer is full, then draw all sprites and clear it.
+            </summary>
+        </member>
+        <member name="M:SpriteTextRenderer.SpriteRenderer.UpdateVertexBufferData``1(``0[])">
+            <summary>
+            Copies the vertices to the vertex buffer.
+            </summary>
+            <typeparam name="T">The vertices' type</typeparam>
+            <param name="vertices">The vertices to copy</param>
+        </member>
+        <member name="M:SpriteTextRenderer.SpriteRenderer.InitRendering">
+            <summary>
+            Initializes the rendering by setting the input layout, primitive topology and vertex buffer.
+            </summary>
+        </member>
+        <member name="M:SpriteTextRenderer.SpriteRenderer.Draw(System.Object,System.Int32,System.Int32)">
+            <summary>
+            Draws the specified range of points with the specified texture.
+            </summary>
+            <param name="texture">The texture to draw</param>
+            <param name="count">The number of vertices to draw</param>
+            <param name="offset">The offset of the first vertex from the vertex buffer start</param>
+        </member>
+        <member name="M:SpriteTextRenderer.SpriteRenderer.Flush">
+            <summary>
+            This method causes the SpriteRenderer to immediately draw all buffered sprites.
+            </summary>
+            <remarks>
+            This method should be called at the end of a frame in order to draw the last sprites that are in the buffer.
+            </remarks>
+        </member>
+        <member name="M:SpriteTextRenderer.SpriteRenderer.DisposeOfResources">
+            <summary>
+            Dispose of the resources that have been created by the specific renderer, except for blend and depth stencil state.
+            </summary>
+        </member>
+        <member name="M:SpriteTextRenderer.SpriteRenderer.Dispose">
+            <summary>
+            Disposes of the SpriteRenderer.
+            </summary>
+        </member>
+        <member name="P:SpriteTextRenderer.SpriteRenderer.DeviceRef">
+            <summary>
+            Returns the device.
+            </summary>
+        </member>
+        <member name="P:SpriteTextRenderer.SpriteRenderer.HandleDepthStencilState">
+            <summary>
+            Gets or sets, if this SpriteRenderer handles DepthStencilState
+            </summary>
+            <remarks>
+            <para>
+            Sprites have to be drawn with depth test disabled. If HandleDepthStencilState is set to true, the
+            SpriteRenderer sets the DepthStencilState to a predefined state before drawing and resets it to
+            the previous state after that. Set this value to false, if you want to handle states yourself.
+            </para>
+            <para>
+            The default value is true.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:SpriteTextRenderer.SpriteRenderer.HandleBlendState">
+            <summary>
+            Gets or sets, if this SpriteRenderer handles BlendState
+            </summary>
+            <remarks>
+            <para>
+            Sprites have to be drawn with simple alpha blending. If HandleBlendState is set to true, the
+            SpriteRenderer sets the BlendState to a predefined state before drawing and resets it to
+            the previous state after that. Set this value to false, if you want to handle states yourself.
+            </para>
+            <para>
+            The default value is true.
+            </para>
+            </remarks>
+        </member>
+        <member name="P:SpriteTextRenderer.SpriteRenderer.AlphaBlendMode">
+            <summary>
+            Gets or sets the alpha blending mode of this sprite renderer
+            <para>
+            If AlphaBlendMode is changed a flush operation immedietly occurs.
+            </para>
+            </summary>
+        </member>
+        <member name="P:SpriteTextRenderer.SpriteRenderer.LockDeviceOnDraw">
+            <summary>
+            Gets or sets whether to lock the device when rendering sprites. This can be used for multi-threaded rendering.
+            However, locking comes with performance penalties.
+            <remarks>The default value is false.</remarks>
+            </summary>
+        </member>
+        <member name="P:SpriteTextRenderer.SpriteRenderer.AllowReorder">
+            <summary>
+            Set to true, if the order of draw calls can be rearranged for better performance.
+            </summary>
+            <remarks>
+            Sprites are not drawn immediately, but only on a call to <see cref="M:SpriteTextRenderer.SpriteRenderer.Flush"/>.
+            Rendering performance can be improved, if the order of sprites can be changed, so that sprites
+            with the same texture can be drawn with one draw call. However, this will not preserve the z-order.
+            Use <see cref="M:SpriteTextRenderer.SpriteRenderer.ClearReorderBuffer"/> to force a set of sprites to be drawn before another set.
+            </remarks>
+            <example>
+            Consider the following pseudo code:
+            <code>
+            Draw left intense red circle
+            Draw middle light red circle
+            Draw right intense red circle
+            </code>
+            <para>With AllowReorder set to true, this will result in the following image:<br/>
+            <img src="../Reorder1.jpg" alt=""/><br/>
+            That is because the last circle is reordered to be drawn together with the first circle.
+            </para>
+            <para>With AllowReorder set to false, this will result in the following image:<br/>
+            <img src="../Reorder2.jpg" alt=""/><br/>
+            No optimization is applied. Performance may be slightly worse than with reordering.
+            </para>
+            </example>
+        </member>
+        <member name="P:SpriteTextRenderer.SpriteRenderer.ScreenSize">
+            <summary>
+            When using relative coordinates, the screen size has to be set. Typically the screen size in pixels is used. However, other values are possible as well.
+            </summary>
+        </member>
+        <member name="P:SpriteTextRenderer.SpriteRenderer.CurrentBlendState">
+            <summary>
+            Gets or sets the device's current blend state. The type is the specific library's type.
+            </summary>
+        </member>
+        <member name="P:SpriteTextRenderer.SpriteRenderer.CurrentDepthStencilState">
+            <summary>
+            Gets or sets the device's current depth stencil state. The type is the specific library's type.
+            </summary>
+        </member>
+        <member name="T:SpriteTextRenderer.STRColor">
+            <summary>
+            The SpriteTextRenderer uses a library-independent color structure because the base lib must not depend on either SlimDX or SharpDX
+            </summary>
+        </member>
+        <member name="T:SpriteTextRenderer.StringMetrics">
+            <summary>
+            Defines, in which area a specific text is rendered
+            </summary>
+            <remarks>
+            <para>The textblock is the area filled with actual characters without any overhang.</para>
+            <para>Overhangs enlarge the textblock rectangle. I.e. if OverhangLeft is 10, then there are parts of the text that are rendered 10 units left of the actual text block.
+            However, these parts do not count as real text.
+            If an overhang is negative, there is no letter, which actually reaches the textblock edge. Thus, the textblock is rendered on a smaller area.</para>
+            <para>The full rect is the actual rendering space. I.e. the textblock with overhangs.</para>
+            </remarks>
+            <example>
+            <para>Consider the following example. The string "Example Text" has been drawn at position (20, 40).</para>
+            <img src="../Blocks.jpg" alt="Block structure"/>
+            <para>The light red block is the text block. This is the layout rectangle. Text blocks containing one line
+            usually have the same height - the line height. Therefore, text blocks can easily be concatenated without
+            worrying about layout.</para>
+            <para>The dark red block is the actual FullRect. This is the rectangle that exactly fits the rendered text.
+            The difference between text block and full rect is described by the overhangs. If an overhang is positive,
+            then the full rect is bigger than the textblock (as for the right side). If it is negative, the full rect
+            is smaller (as for the other sides).</para>
+            <para>
+            Here are the actual values for the example:
+            <ul>
+            <li>TopLeft: (20, 40)</li>
+            <li>Size: (449.17, 117.9)</li>
+            <li>OverhangLeft: -14.48</li>
+            <li>OverhangRight: 12.30</li>
+            <li>OverhangTop: -15.06</li>
+            <li>OverhangBottom: -4.54</li>
+            </ul>
+            </para>
+            </example>
+        </member>
+        <member name="M:SpriteTextRenderer.StringMetrics.Merge(SpriteTextRenderer.StringMetrics)">
+            <summary>
+            Merges this instance of StringMetrics with another instance. 
+            The textblock and overhangs of this instance will be increased to cover both instances.
+            </summary>
+            <param name="second">The second StringMetrics instance. This object will not be changed.</param>
+            <exception cref="T:System.ArgumentException">Thrown when one instance has flipped axes and the other does not.</exception>
+        </member>
+        <member name="P:SpriteTextRenderer.StringMetrics.TopLeft">
+            <summary>
+            Top left corner of the textblock.
+            </summary>
+        </member>
+        <member name="P:SpriteTextRenderer.StringMetrics.Size">
+            <summary>
+            Size of the textblock.
+            </summary>
+        </member>
+        <member name="P:SpriteTextRenderer.StringMetrics.BottomRight">
+            <summary>
+            Returns the bottom right corner of the textblock
+            </summary>
+        </member>
+        <member name="P:SpriteTextRenderer.StringMetrics.OverhangLeft">
+            <summary>
+            The space that is added to the textblock by overhangs on the left side.
+            </summary>
+        </member>
+        <member name="P:SpriteTextRenderer.StringMetrics.OverhangRight">
+            <summary>
+            The space that is added to the textblock by overhangs on the right side.
+            </summary>
+        </member>
+        <member name="P:SpriteTextRenderer.StringMetrics.OverhangTop">
+            <summary>
+            The space that is added above the textblock by overhangs.
+            </summary>
+        </member>
+        <member name="P:SpriteTextRenderer.StringMetrics.OverhangBottom">
+            <summary>
+            The space that is added below the textblock by overhangs.
+            </summary>
+        </member>
+        <member name="P:SpriteTextRenderer.StringMetrics.FullRectTopLeft">
+            <summary>
+            The top left corner of the full rect.
+            </summary>
+        </member>
+        <member name="P:SpriteTextRenderer.StringMetrics.FullRectSize">
+            <summary>
+            The size of the full rect.
+            </summary>
+        </member>
+        <member name="T:SpriteTextRenderer.STRInputElement">
+            <summary>
+            The SpriteTextRenderer uses a library-independent input element structure because the base lib must not depend on either SlimDX or SharpDX
+            </summary>
+        </member>
+        <member name="T:SpriteTextRenderer.STRFormat">
+            <summary>
+            Defines the format of an input element
+            </summary>
+        </member>
+        <member name="T:SpriteTextRenderer.STRLayout">
+            <summary>
+            The sprite text renderer uses a library-independent layout struct for characters.
+            </summary>
+        </member>
+        <member name="T:SpriteTextRenderer.SpriteSegment">
+            <summary>
+            This structure holds data for sprites with a specific texture
+            </summary>
+        </member>
+        <member name="F:SpriteTextRenderer.SpriteSegment.Texture">
+            <summary>
+            The ShaderResourceView
+            </summary>
+        </member>
+        <member name="F:SpriteTextRenderer.CharTableDescription.Texture">
+            <summary>
+            A Texture2D
+            </summary>
+        </member>
+        <member name="F:SpriteTextRenderer.CharDescription.CharSize">
+            <summary>
+            Size of the char excluding overhangs
+            </summary>
+        </member>
+        <member name="T:SpriteTextRenderer.STRVector">
+            <summary>
+            The SpriteTextRenderer uses a library-independent vector structure because the base lib must not depend on either SlimDX or SharpDX
+            </summary>
+        </member>
+        <member name="T:SpriteTextRenderer.STRViewport">
+            <summary>
+            The SpriteTextRenderer uses a library-independent viewport structure because the base lib must not depend on either SlimDX or SharpDX
+            </summary>
+        </member>
+        <member name="T:SpriteTextRenderer.TextAlignment">
+            <summary>
+            Defines how a text is aligned in a rectangle. Use OR-combinations of vertical and horizontal alignment.
+            </summary>
+            <example>
+            This example aligns the textblock on the top edge of the rectangle horizontally centered:
+            <code lang="cs">var textAlignment = TextAlignment.Top | TextAlignment.HorizontalCenter</code>
+            <code lang="vb">Dim textAlignment = TextAlignment.Top Or TextAlignment.HorizontalCenter</code>
+            </example>
+        </member>
+        <member name="F:SpriteTextRenderer.TextAlignment.Top">
+            <summary>
+            The top edge of the text is aligned at the top edge of the rectangle.
+            </summary>
+        </member>
+        <member name="F:SpriteTextRenderer.TextAlignment.VerticalCenter">
+            <summary>
+            The vertical center of the text is aligned at the vertical center of the rectangle.
+            </summary>
+        </member>
+        <member name="F:SpriteTextRenderer.TextAlignment.Bottom">
+            <summary>
+            The bottom edge of the text is aligned at the bottom edge of the rectangle.
+            </summary>
+        </member>
+        <member name="F:SpriteTextRenderer.TextAlignment.Left">
+            <summary>
+            The left edge of the text is aligned at the left edge of the rectangle.
+            </summary>
+        </member>
+        <member name="F:SpriteTextRenderer.TextAlignment.HorizontalCenter">
+            <summary>
+            The horizontal center of the text is aligned at the horizontal center of the rectangle. Each line is aligned independently.
+            </summary>
+        </member>
+        <member name="F:SpriteTextRenderer.TextAlignment.Right">
+            <summary>
+            The right edge of the text is aligned at the right edge of the rectangle. Each line is aligned independently.
+            </summary>
+        </member>
+        <member name="T:SpriteTextRenderer.DeviceDescriptor">
+            <summary>
+            Holds references to all library-specific devices and factories that are used for rendering text.
+            </summary>
+        </member>
+        <member name="F:SpriteTextRenderer.DeviceDescriptor.D3DDevice10">
+            <summary>
+            The DirectX10 device to use to render fonts. This device is shared across all TextBlockRenderer instances
+            </summary>
+        </member>
+        <member name="F:SpriteTextRenderer.DeviceDescriptor.WriteFactory">
+            <summary>
+            The DirectWrite factory to use. This factory is shared across all TextBlockRenderer instances.
+            </summary>
+        </member>
+        <member name="F:SpriteTextRenderer.DeviceDescriptor.D2DFactory">
+            <summary>
+            The Direct2D factory to use. This factory is shared across all TextBlockRenderer instances.
+            </summary>
+        </member>
+        <member name="F:SpriteTextRenderer.DeviceDescriptor.referenceCount">
+            <summary>
+            Holds the number of active TextBlockRenderer instances
+            </summary>
+        </member>
+        <member name="M:SpriteTextRenderer.DeviceDescriptor.DisposeAll">
+            <summary>
+            Disposes of all devices and factories of this description.
+            </summary>
+        </member>
+        <member name="T:SpriteTextRenderer.TextBlockRenderer">
+            <summary>
+            This class is responsible for rendering arbitrary text. Every TextRenderer is specialized for a specific font and relies on
+            a SpriteRenderer for rendering the text.
+            </summary>
+        </member>
+        <member name="F:SpriteTextRenderer.TextBlockRenderer.CharTables">
+            <summary>
+            Contains information about every char table that has been created.
+            </summary>
+        </member>
+        <member name="M:SpriteTextRenderer.TextBlockRenderer.#ctor(SpriteTextRenderer.SpriteRenderer,System.Single)">
+            <summary>
+            Creates a new text renderer for a specific font.
+            </summary>
+            <param name="sprite">The sprite renderer that is used for rendering</param>
+            <param name="fontWeight">Font weight parameter</param>
+        </member>
+        <member name="M:SpriteTextRenderer.TextBlockRenderer.GetTextLayout(System.String)">
+            <summary>
+            Calculates the text layout for a given string.
+            </summary>
+            <param name="s">The string to layout</param>
+            <returns>The string's layout information</returns>
+        </member>
+        <member name="M:SpriteTextRenderer.TextBlockRenderer.CreateFontMapTexture(System.Int32,System.Int32,SpriteTextRenderer.CharRenderCall[])">
+            <summary>
+            Creates a new shared texture and performs the specified draw calls on it.
+            </summary>
+            <param name="width">The texture's width</param>
+            <param name="height">The texture's height</param>
+            <param name="drawCalls">The draw calls to perform</param>
+        </member>
+        <member name="M:SpriteTextRenderer.TextBlockRenderer.CreateDeviceCompatibleTexture(System.Int32,System.Int32,System.IDisposable,System.IDisposable@,System.IDisposable@)">
+            <summary>
+            Creates a DirectX11 texture from the DirectX10 texture by opening the shared resource (or by creating a new one in PIX compatibility mode).
+            </summary>
+            <param name="width">The texture's width for PIX compatibility mode</param>
+            <param name="height">The texture's height for PIX compatibility mode</param>
+            <param name="texture10">The DirectX10 texture</param>
+            <param name="texture11">Output parameter, the DirectX11 texture</param>
+            <param name="srv11">Output parameter, the texture's ShaderResourceView</param>
+        </member>
+        <member name="M:SpriteTextRenderer.TextBlockRenderer.CreateCharTable(System.Byte)">
+            <summary>
+            Creates the texture and necessary structures for 256 chars whose unicode number starts with the given byte.
+            The table containing ASCII has a prefix of 0 (0x00/00 - 0x00/FF).
+            </summary>
+            <param name="bytePrefix">The byte prefix of characters.</param>
+        </member>
+        <member name="M:SpriteTextRenderer.TextBlockRenderer.DrawString(System.String,SpriteTextRenderer.STRVector,System.Single,SpriteTextRenderer.STRColor,SpriteTextRenderer.CoordinateType)">
+            <summary>
+            Draws the string in the specified coordinate system.
+            </summary>
+            <param name="text">The text to draw</param>
+            <param name="position">A position in the chosen coordinate system where the top left corner of the first character will be</param>
+            <param name="realFontSize">The real font size in the chosen coordinate system</param>
+            <param name="color">The color in which to draw the text</param>
+            <param name="coordinateType">The chosen coordinate system</param>
+            <returns>The StringMetrics for the rendered text</returns>
+        </member>
+        <member name="M:SpriteTextRenderer.TextBlockRenderer.DrawString(System.String,SpriteTextRenderer.STRVector,SpriteTextRenderer.STRColor)">
+            <summary>
+            Draws the string untransformed in absolute coordinate system.
+            </summary>
+            <param name="text">The text to draw</param>
+            <param name="position">A position in absolute coordinates where the top left corner of the first character will be</param>
+            <param name="color">The color in which to draw the text</param>
+            <returns>The StringMetrics for the rendered text</returns>
+        </member>
+        <member name="M:SpriteTextRenderer.TextBlockRenderer.MeasureString(System.String)">
+            <summary>
+            Measures the untransformed string in absolute coordinate system.
+            </summary>
+            <param name="text">The text to measure</param>
+            <returns>The StringMetrics for the text</returns>
+        </member>
+        <member name="M:SpriteTextRenderer.TextBlockRenderer.MeasureString(System.String,System.Single,SpriteTextRenderer.CoordinateType)">
+            <summary>
+            Measures the string in the specified coordinate system.
+            </summary>
+            <param name="text">The text to measure</param>
+            <param name="realFontSize">The real font size in the chosen coordinate system</param>
+            <param name="coordinateType">The chosen coordinate system</param>
+            <returns>The StringMetrics for the text</returns>
+        </member>
+        <member name="M:SpriteTextRenderer.TextBlockRenderer.DrawString(System.String,System.Drawing.RectangleF,SpriteTextRenderer.TextAlignment,System.Single,SpriteTextRenderer.STRColor,SpriteTextRenderer.CoordinateType)">
+            <summary>
+            Draws the string in the specified coordinate system aligned in the given rectangle. The text is not clipped or wrapped.
+            </summary>
+            <param name="text">The text to draw</param>
+            <param name="rect">The rectangle in which to align the text</param>
+            <param name="align">Alignment of text in rectangle</param>
+            <param name="realFontSize">The real font size in the chosen coordinate system</param>
+            <param name="color">The color in which to draw the text</param>
+            <param name="coordinateType">The chosen coordinate system</param>
+            <returns>The StringMetrics for the rendered text</returns>
+        </member>
+        <member name="M:SpriteTextRenderer.TextBlockRenderer.DrawString(System.String,System.Drawing.RectangleF,SpriteTextRenderer.TextAlignment,SpriteTextRenderer.STRColor)">
+            <summary>
+            Draws the string unscaled in absolute coordinate system aligned in the given rectangle. The text is not clipped or wrapped.
+            </summary>
+            <param name="text">Text to draw</param>
+            <param name="rect">A position in absolute coordinates where the top left corner of the first character will be</param>
+            <param name="align">Alignment in rectangle</param>
+            <param name="color">Color in which to draw the text</param>
+            <returns>The StringMetrics for the rendered text</returns>
+        </member>
+        <member name="M:SpriteTextRenderer.TextBlockRenderer.Dispose">
+            <summary>
+            Disposes of the SpriteRenderer.
+            </summary>
+        </member>
+        <member name="P:SpriteTextRenderer.TextBlockRenderer.FontSize">
+            <summary>
+            Returns the font size that this TextRenderer was created for.
+            </summary>
+        </member>
+        <member name="P:SpriteTextRenderer.TextBlockRenderer.PixCompatible">
+            <summary>
+            Gets or sets whether this TextRenderer should behave PIX compatibly.
+            </summary>
+            <remarks>
+            PIX compatibility means that no shared resource is used.
+            However, this will result in no visible text being drawn. 
+            The geometry itself will be visible in PIX.
+            </remarks>
+        </member>
+    </members>
+</doc>

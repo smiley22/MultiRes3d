@@ -37,10 +37,10 @@
       <HintPath>..\packages\SlimDX.4.0.13.44\lib\NET40\SlimDX.dll</HintPath>
     </Reference>
     <Reference Include="SpriteTextRenderer">
-      <HintPath>..\packages\SpriteTextRenderer.2.0.0.0\lib\NET40\SpriteTextRenderer.dll</HintPath>
+      <HintPath>Libs\SpriteTextRenderer.dll</HintPath>
     </Reference>
     <Reference Include="SpriteTextRenderer.SlimDX">
-      <HintPath>..\packages\SpriteTextRenderer.2.0.0.0\lib\NET40\SpriteTextRenderer.SlimDX.dll</HintPath>
+      <HintPath>Libs\SpriteTextRenderer.SlimDX.dll</HintPath>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />
@@ -132,7 +132,9 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
   </ItemGroup>
-  <ItemGroup />
+  <ItemGroup>
+    <Folder Include="Libs\" />
+  </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.

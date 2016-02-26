@@ -1,0 +1,193 @@
+<?xml version="1.0"?>
+<doc>
+    <assembly>
+        <name>SpriteTextRenderer.SlimDX</name>
+    </assembly>
+    <members>
+        <member name="T:SpriteTextRenderer.SlimDX.Extensions">
+            <summary>
+            Provides extension methods to convert SlimDX-specific types to library-independent types and vice versa.
+            </summary>
+        </member>
+        <member name="M:SpriteTextRenderer.SlimDX.Extensions.ToSlimDXInputElement(SpriteTextRenderer.STRInputElement)">
+            <summary>
+            Converts a library-independent input element to a SlimDX InputElement.
+            </summary>
+            <param name="element">The library-independent input element to convert</param>
+            <returns>The SlimDX InputElement</returns>
+        </member>
+        <member name="M:SpriteTextRenderer.SlimDX.Extensions.ToSTRViewport(SlimDX.Direct3D11.Viewport)">
+            <summary>
+            Converts a SlimDX Viewport to a library-independent viewport.
+            </summary>
+            <param name="vp">The SlimDX viewport</param>
+            <returns>The library-independent viewport</returns>
+        </member>
+        <member name="M:SpriteTextRenderer.SlimDX.Extensions.ToSTRVector(SlimDX.Vector2)">
+            <summary>
+            Converts a SlimDX vector to a library-independent vector
+            </summary>
+            <param name="v">The SlimDX vector</param>
+            <returns>The library-independent vector</returns>
+        </member>
+        <member name="M:SpriteTextRenderer.SlimDX.Extensions.ToVector(SpriteTextRenderer.STRVector)">
+            <summary>
+            Converts a library-independent vector to a SlimDX vector.
+            </summary>
+            <param name="v">The library-independent vector</param>
+            <returns>The SlimDX vector</returns>
+        </member>
+        <member name="M:SpriteTextRenderer.SlimDX.Extensions.ToSTRColor(SlimDX.Color4)">
+            <summary>
+            Converts a SlimDX color to a library-independent color.
+            </summary>
+            <param name="c">The SlimDX color</param>
+            <returns>The library-independent color</returns>
+        </member>
+        <member name="M:SpriteTextRenderer.SlimDX.Extensions.ToSTRLayout(SlimDX.DirectWrite.TextLayout)">
+            <summary>
+            Converts a SlimDX TextLayout to a library-independent layout.
+            </summary>
+            <param name="layout">The SlimDX layout</param>
+            <returns>The library-independent layout</returns>
+        </member>
+        <member name="T:SpriteTextRenderer.SlimDX.SpriteRenderer">
+            <summary>
+            This class is responsible for rendering 2D sprites using SlimDX. Typically, only one instance of this class is necessary.
+            </summary>
+        </member>
+        <member name="M:SpriteTextRenderer.SlimDX.SpriteRenderer.Draw(SlimDX.Direct3D11.ShaderResourceView,SlimDX.Vector2,SlimDX.Vector2,SpriteTextRenderer.CoordinateType)">
+            <summary>
+            Draws a complete texture on the screen.
+            </summary>
+            <param name="texture">The shader resource view of the texture to draw</param>
+            <param name="position">Position of the top left corner of the texture in the chosen coordinate system</param>
+            <param name="size">Size of the texture in the chosen coordinate system. The size is specified in the screen's coordinate system.</param>
+            <param name="coordinateType">A custom coordinate system in which to draw the texture</param>
+        </member>
+        <member name="M:SpriteTextRenderer.SlimDX.SpriteRenderer.Draw(SlimDX.Direct3D11.ShaderResourceView,SlimDX.Vector2,SlimDX.Vector2,SlimDX.Vector2,System.Double,SpriteTextRenderer.CoordinateType)">
+            <summary>
+            Draws a complete texture on the screen.
+            </summary>
+            <param name="texture">The shader resource view of the texture to draw</param>
+            <param name="position">Position of the top left corner of the texture in the chosen coordinate system</param>
+            <param name="size">Size of the texture in the chosen coordinate system. The size is specified in the screen's coordinate system.</param>
+            <param name="center">Specify the texture's center in the chosen coordinate system. The center is specified in the texture's local coordinate system. E.g. for <paramref name="coordinateType"/>=CoordinateType.SNorm, the texture's center is defined by (0, 0).</param>
+            <param name="rotationAngle">The angle in radians to rotate the texture. Positive values mean counter-clockwise rotation. Rotations can only be applied for relative or absolute coordinates. Consider using the Degrees or Radians helper structs.</param>
+            <param name="coordinateType">A custom coordinate system in which to draw the texture</param>
+        </member>
+        <member name="M:SpriteTextRenderer.SlimDX.SpriteRenderer.Draw(SlimDX.Direct3D11.ShaderResourceView,SlimDX.Vector2,SlimDX.Vector2,SlimDX.Color4,SpriteTextRenderer.CoordinateType)">
+            <summary>
+            Draws a complete texture on the screen.
+            </summary>
+            <param name="texture">The shader resource view of the texture to draw</param>
+            <param name="position">Position of the top left corner of the texture in the chosen coordinate system</param>
+            <param name="size">Size of the texture in the chosen coordinate system. The size is specified in the screen's coordinate system.</param>
+            <param name="coordinateType">A custom coordinate system in which to draw the texture</param>
+            <param name="color">The color with which to multiply the texture</param>
+        </member>
+        <member name="M:SpriteTextRenderer.SlimDX.SpriteRenderer.Draw(SlimDX.Direct3D11.ShaderResourceView,SlimDX.Vector2,SlimDX.Vector2,SlimDX.Vector2,System.Double,SlimDX.Color4,SpriteTextRenderer.CoordinateType)">
+            <summary>
+            Draws a complete texture on the screen.
+            </summary>
+            <param name="texture">The shader resource view of the texture to draw</param>
+            <param name="position">Position of the top left corner of the texture in the chosen coordinate system</param>
+            <param name="size">Size of the texture in the chosen coordinate system. The size is specified in the screen's coordinate system.</param>
+            <param name="center">Specify the texture's center in the chosen coordinate system. The center is specified in the texture's local coordinate system. E.g. for <paramref name="coordinateType"/>=CoordinateType.SNorm, the texture's center is defined by (0, 0).</param>
+            <param name="rotationAngle">The angle in radians to rotate the texture. Positive values mean counter-clockwise rotation. Rotations can only be applied for relative or absolute coordinates. Consider using the Degrees or Radians helper structs.</param>
+            <param name="coordinateType">A custom coordinate system in which to draw the texture</param>
+            <param name="color">The color with which to multiply the texture</param>
+        </member>
+        <member name="M:SpriteTextRenderer.SlimDX.SpriteRenderer.Draw(SlimDX.Direct3D11.ShaderResourceView,SlimDX.Vector2,SlimDX.Vector2,SlimDX.Vector2,System.Double,SlimDX.Vector2,SlimDX.Vector2,SlimDX.Color4,SpriteTextRenderer.CoordinateType)">
+            <summary>
+            Draws a region of a texture on the screen.
+            </summary>
+            <param name="texture">The shader resource view of the texture to draw</param>
+            <param name="position">Position of the center of the texture in the chosen coordinate system</param>
+            <param name="size">Size of the texture in the chosen coordinate system. The size is specified in the screen's coordinate system.</param>
+            <param name="center">Specify the texture's center in the chosen coordinate system. The center is specified in the texture's local coordinate system. E.g. for <paramref name="coordinateType"/>=CoordinateType.SNorm, the texture's center is defined by (0, 0).</param>
+            <param name="rotationAngle">The angle in radians to rotate the texture. Positive values mean counter-clockwise rotation. Rotations can only be applied for relative or absolute coordinates. Consider using the Degrees or Radians helper structs.</param>
+            <param name="coordinateType">A custom coordinate system in which to draw the texture</param>
+            <param name="color">The color with which to multiply the texture</param>
+            <param name="texCoords">Texture coordinates for the top left corner</param>
+            <param name="texCoordsSize">Size of the region in texture coordinates</param>
+        </member>
+        <member name="M:SpriteTextRenderer.SlimDX.SpriteRenderer.Draw(SlimDX.Direct3D11.ShaderResourceView,SlimDX.Vector2,SlimDX.Vector2,SlimDX.Vector2,SlimDX.Vector2,SlimDX.Color4,SpriteTextRenderer.CoordinateType)">
+            <summary>
+            Draws a region of a texture on the screen.
+            </summary>
+            <param name="texture">The shader resource view of the texture to draw</param>
+            <param name="position">Position of the center of the texture in the chosen coordinate system</param>
+            <param name="size">Size of the texture in the chosen coordinate system. The size is specified in the screen's coordinate system.</param>
+            <param name="coordinateType">A custom coordinate system in which to draw the texture</param>
+            <param name="color">The color with which to multiply the texture</param>
+            <param name="texCoords">Texture coordinates for the top left corner</param>
+            <param name="texCoordsSize">Size of the region in texture coordinates</param>
+        </member>
+        <member name="P:SpriteTextRenderer.SlimDX.SpriteRenderer.Device">
+            <summary>
+            Returns the Direct3D device that this SpriteRenderer was created for.
+            </summary>
+        </member>
+        <member name="T:SpriteTextRenderer.SlimDX.TextBlockRenderer">
+            <summary>
+            This class is responsible for rendering arbitrary text using SlimDX. Every TextRenderer is specialized for a specific font and relies on
+            a SpriteRenderer for rendering the text.
+            </summary>
+        </member>
+        <member name="M:SpriteTextRenderer.SlimDX.TextBlockRenderer.#ctor(SpriteTextRenderer.SlimDX.SpriteRenderer,System.String,SlimDX.DirectWrite.FontWeight,SlimDX.DirectWrite.FontStyle,SlimDX.DirectWrite.FontStretch,System.Single)">
+            <summary>
+            Creates a new text renderer for a specific font.
+            </summary>
+            <param name="sprite">The sprite renderer that is used for rendering</param>
+            <param name="fontName">Name of font. The font has to be installed on the system. 
+            If no font can be found, a default one is used.</param>
+            <param name="fontSize">Size in which to prerender the text. FontSize should be equal to render size for best results.</param>
+            <param name="fontStretch">Font stretch parameter</param>
+            <param name="fontStyle">Font style parameter</param>
+            <param name="fontWeight">Font weight parameter</param>
+        </member>
+        <member name="M:SpriteTextRenderer.SlimDX.TextBlockRenderer.DrawString(System.String,SlimDX.Vector2,System.Single,SlimDX.Color4,SpriteTextRenderer.CoordinateType)">
+            <summary>
+            Draws the string in the specified coordinate system.
+            </summary>
+            <param name="text">The text to draw</param>
+            <param name="position">A position in the chosen coordinate system where the top left corner of the first character will be</param>
+            <param name="realFontSize">The real font size in the chosen coordinate system</param>
+            <param name="color">The color in which to draw the text</param>
+            <param name="coordinateType">The chosen coordinate system</param>
+            <returns>The StringMetrics for the rendered text</returns>
+        </member>
+        <member name="M:SpriteTextRenderer.SlimDX.TextBlockRenderer.DrawString(System.String,SlimDX.Vector2,SlimDX.Color4)">
+            <summary>
+            Draws the string untransformed in absolute coordinate system.
+            </summary>
+            <param name="text">The text to draw</param>
+            <param name="position">A position in absolute coordinates where the top left corner of the first character will be</param>
+            <param name="color">The color in which to draw the text</param>
+            <returns>The StringMetrics for the rendered text</returns>
+        </member>
+        <member name="M:SpriteTextRenderer.SlimDX.TextBlockRenderer.DrawString(System.String,System.Drawing.RectangleF,SpriteTextRenderer.TextAlignment,System.Single,SlimDX.Color4,SpriteTextRenderer.CoordinateType)">
+            <summary>
+            Draws the string in the specified coordinate system aligned in the given rectangle. The text is not clipped or wrapped.
+            </summary>
+            <param name="text">The text to draw</param>
+            <param name="rect">The rectangle in which to align the text</param>
+            <param name="align">Alignment of text in rectangle</param>
+            <param name="realFontSize">The real font size in the chosen coordinate system</param>
+            <param name="color">The color in which to draw the text</param>
+            <param name="coordinateType">The chosen coordinate system</param>
+            <returns>The StringMetrics for the rendered text</returns>
+        </member>
+        <member name="M:SpriteTextRenderer.SlimDX.TextBlockRenderer.DrawString(System.String,System.Drawing.RectangleF,SpriteTextRenderer.TextAlignment,SlimDX.Color4)">
+            <summary>
+            Draws the string unscaled in absolute coordinate system aligned in the given rectangle. The text is not clipped or wrapped.
+            </summary>
+            <param name="text">Text to draw</param>
+            <param name="rect">A position in absolute coordinates where the top left corner of the first character will be</param>
+            <param name="align">Alignment in rectangle</param>
+            <param name="color">Color in which to draw the text</param>
+            <returns>The StringMetrics for the rendered text</returns>
+        </member>
+    </members>
+</doc>
