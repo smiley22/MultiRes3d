@@ -33,8 +33,13 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
-    <Reference Include="SlimDX">
+    <Reference Include="SlimDX, Version=4.0.13.43, Culture=neutral, PublicKeyToken=b1b0c32fd1ffe4f9, processorArchitecture=x86">
       <HintPath>..\packages\SlimDX.4.0.13.44\lib\NET40\SlimDX.dll</HintPath>
+      <Private>True</Private>
+    </Reference>
+    <Reference Include="SlimDX.D3D11Control, Version=1.0.0.0, Culture=neutral, processorArchitecture=x86">
+      <HintPath>..\packages\SlimDX.D3D11Control.1.0.0\lib\net40\SlimDX.D3D11Control.dll</HintPath>
+      <Private>True</Private>
     </Reference>
     <Reference Include="SpriteTextRenderer">
       <HintPath>Libs\SpriteTextRenderer.dll</HintPath>
@@ -117,12 +122,6 @@
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />
-  </ItemGroup>
-  <ItemGroup>
-    <ProjectReference Include="..\SlimDX.D3D11Control\SlimDX.D3D11Control.csproj">
-      <Project>{aa505758-fca7-45a3-b5b8-1960e93c9da1}</Project>
-      <Name>SlimDX.D3D11Control</Name>
-    </ProjectReference>
   </ItemGroup>
   <ItemGroup>
     <Content Include="Effects\Basic.fx">
